@@ -324,22 +324,21 @@
 
         /* --- PRINT STYLES --- */
         @media print {
-            /* 1. Reset Page */
-            /* Note: @page size is now handled dynamically via JS injection for flexibility */
-            
+            /* Fix lỗi 100 món in ra 1 trang */
             html, body { 
-                /* Quan trọng: Để mặc định, JS sẽ override */
-                width: auto; 
-                height: auto; 
+                width: 100%; 
+                height: auto !important; 
                 margin: 0 !important; 
                 padding: 0 !important; 
                 background: white !important; 
                 overflow: visible !important; 
+                position: static !important;
             }
 
             /* 2. Hide UI Elements */
             #ui-container, .modal-overlay, #toast { 
                 display: none !important; 
+                height: 0 !important;
             }
 
             /* 3. Display Print Section */

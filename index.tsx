@@ -259,132 +259,136 @@ const App = () => {
     const processPrintAndSave = () => {
         let totalMoney = 0;
         cart.forEach(i => totalMoney += (i.price * (Number(i.quantity) || 0)));
-        // Đóng modal UI
+        
+        // 1. Đóng modal UI ngay lập tức
         setShowConfirmModal(false);
 
         const printSection = document.getElementById('print-section');
-        if (printSection) {
-            // --- BƯỚC 1: Xóa Style cũ để đảm bảo cập nhật mới nhất ---
-            const oldStyle = document.getElementById('dynamic-print-style');
-            if (oldStyle) oldStyle.remove();
+        if (!printSection) return;
 
-            // --- BƯỚC 2: Tạo CSS mới (SỬA LỖI TREO VÀ LỖI 1 TRANG) ---
-            const dynamicStyle = document.createElement('style');
-            dynamicStyle.id = 'dynamic-print-style';
-            
-            // QUAN TRỌNG: 
-            // 1. @page size: Thiết lập kích thước giấy cho trình duyệt.
-            // 2. html, body: Phải reset height: auto và overflow: visible. Nếu để height: 100% (mặc định app) thì khi in 100 món sẽ bị cắt còn 1 trang.
-            // 3. .sticker: break-after: page để ngắt trang.
-            dynamicStyle.innerHTML = `
-                @media print {
-                    @page {
-                        margin: 0 !important;
-                        size: ${printConfig.width}mm ${printConfig.height}mm;
-                    }
-                    html, body {
-                        margin: 0 !important;
-                        padding: 0 !important;
-                        background: #fff !important;
-                        width: 100% !important;
-                        height: auto !important; /* SỬA LỖI CHỈ IN 1 TRANG */
-                        overflow: visible !important; /* SỬA LỖI CHỈ IN 1 TRANG */
-                        display: block !important;
-                    }
-                    /* Ẩn giao diện App */
-                    #ui-container { display: none !important; }
-                    
-                    /* Hiển thị vùng in */
-                    #print-section {
-                        display: block !important;
-                        width: ${printConfig.width}mm;
-                        height: auto !important;
-                        overflow: visible !important;
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                    }
-
-                    .sticker {
-                        width: ${printConfig.width}mm;
-                        height: ${printConfig.height}mm;
-                        page-break-after: always; /* Cũ */
-                        break-after: page; /* Mới */
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
-                        align-items: center;
-                        overflow: hidden; /* Tránh tràn gây thêm trang trắng */
-                        padding: 1mm;
-                        box-sizing: border-box;
-                    }
-                    .sticker-name {
-                        font-size: 18px; 
-                        font-weight: 900;
-                        text-transform: uppercase;
-                        text-align: center;
-                        line-height: 1.1;
-                        width: 100%;
-                        word-wrap: break-word;
-                    }
-                    .sticker-custom-note {
-                        margin-top: 2px;
-                        font-size: 14px;
-                        font-weight: bold;
-                        background: #000;
-                        color: #fff !important;
-                        padding: 2px 6px;
-                        border-radius: 4px;
-                        text-align: center;
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
-                        max-width: 100%;
-                    }
-                }
-            `;
-            document.head.appendChild(dynamicStyle);
-
-            // --- BƯỚC 3: Tạo nội dung HTML (ĐỒNG BỘ) ---
-            printSection.innerHTML = '';
-            let printHTML = '';
-            cart.forEach(item => {
-                const notePart = (item.note && item.note.trim() !== "") 
-                    ? `<div class="sticker-custom-note">${item.note}</div>` 
-                    : '';
-                const qty = Number(item.quantity) || 0;
-                for (let q = 0; q < qty; q++) {
-                    printHTML += `<div class="sticker">
-                        <div class="sticker-name">${item.name}</div>
-                        ${notePart}
-                    </div>`;
-                }
-            });
-            printSection.innerHTML = printHTML;
-
-            // --- BƯỚC 4: GỌI IN NGAY LẬP TỨC (SỬA LỖI IPHONE CHẶN) ---
-            // Không dùng setTimeout hay requestAnimationFrame ở đây.
-            // Việc gọi window.print() ngay trong stack sự kiện click sẽ được iOS coi là hợp lệ (User Gesture).
-            try {
-                window.print();
-            } catch (e) {
-                console.error("Print error:", e);
-                alert("Lỗi khi gọi máy in. Vui lòng thử lại.");
-            }
-
-            // --- BƯỚC 5: XỬ LÝ SAU KHI IN ---
-            // Chỉ dùng timeout cho popup xác nhận SAU khi lệnh in đã được gửi đi.
-            // Điều này không ảnh hưởng đến việc mở dialog in.
-            setTimeout(() => {
-                const isPrinted = window.confirm("🖨️ XÁC NHẬN:\n\nBạn đã in phiếu thành công chưa?\n\n- Bấm [OK] để LƯU DOANH THU & XÓA ĐƠN.\n- Bấm [Cancel] nếu bạn hủy in.");
-                
-                if (isPrinted) {
-                    sendToGoogleSheet(totalMoney);
-                    clearCart();
-                }
-                // Dọn dẹp DOM in
-                if (printSection) printSection.innerHTML = ''; 
-            }, 500);
+        // 2. Chuẩn bị CSS (Đồng bộ)
+        let styleTag = document.getElementById('dynamic-print-style');
+        if (!styleTag) {
+            styleTag = document.createElement('style');
+            styleTag.id = 'dynamic-print-style';
+            document.head.appendChild(styleTag);
         }
+
+        // SỬA LỖI IN 1 TRANG VÀ TREO MÁY
+        // - html, body: Bắt buộc height: auto, overflow: visible
+        // - @page: Dùng đúng kích thước user cấu hình
+        styleTag.innerHTML = `
+            @media print {
+                @page {
+                    margin: 0 !important;
+                    size: ${printConfig.width}mm ${printConfig.height}mm;
+                }
+                html, body {
+                    width: 100% !important;
+                    height: auto !important; /* Quan trọng: Fix lỗi in 1 trang */
+                    overflow: visible !important; /* Quan trọng: Fix lỗi in 1 trang */
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background: #fff !important;
+                    display: block !important;
+                }
+                /* Ẩn hoàn toàn giao diện App */
+                #ui-container, .modal-overlay { 
+                    display: none !important; 
+                    height: 0 !important;
+                    overflow: hidden !important;
+                }
+                /* Hiển thị vùng in */
+                #print-section {
+                    display: block !important;
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: ${printConfig.width}mm !important; /* Giới hạn chiều rộng theo khổ giấy */
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background: #fff !important;
+                    height: auto !important;
+                    overflow: visible !important;
+                }
+                .sticker {
+                    width: ${printConfig.width}mm;
+                    height: ${printConfig.height}mm;
+                    page-break-after: always;
+                    break-after: page;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    overflow: hidden;
+                    padding: 1mm;
+                    box-sizing: border-box;
+                    border: none;
+                }
+                .sticker-name {
+                    font-size: 18px; 
+                    font-weight: 900;
+                    text-transform: uppercase;
+                    text-align: center;
+                    line-height: 1.1;
+                    width: 100%;
+                    word-wrap: break-word;
+                }
+                .sticker-custom-note {
+                    margin-top: 2px;
+                    font-size: 14px;
+                    font-weight: bold;
+                    background: #000;
+                    color: #fff !important;
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    text-align: center;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                    max-width: 100%;
+                }
+            }
+        `;
+
+        // 3. Chuẩn bị HTML (Đồng bộ)
+        printSection.innerHTML = '';
+        let printHTML = '';
+        cart.forEach(item => {
+            const notePart = (item.note && item.note.trim() !== "") 
+                ? `<div class="sticker-custom-note">${item.note}</div>` 
+                : '';
+            const qty = Number(item.quantity) || 0;
+            for (let q = 0; q < qty; q++) {
+                printHTML += `<div class="sticker">
+                    <div class="sticker-name">${item.name}</div>
+                    ${notePart}
+                </div>`;
+            }
+        });
+        printSection.innerHTML = printHTML;
+
+        // 4. GỌI LỆNH IN NGAY LẬP TỨC (Đồng bộ)
+        // Đây là bước quan trọng nhất để fix lỗi iOS chặn popup.
+        // Tuyệt đối không dùng setTimeout hay requestAnimationFrame bọc window.print()
+        try {
+            window.print();
+        } catch (e) {
+            alert("Lỗi gọi máy in: " + e);
+        }
+
+        // 5. Xử lý sau khi in
+        // Hộp thoại confirm sẽ hiện sau khi user đóng cửa sổ in (hoặc hiện đè lên tùy trình duyệt)
+        // Dùng setTimeout ở đây được vì lệnh in đã được gửi đi rồi.
+        setTimeout(() => {
+            const isPrinted = window.confirm("🖨️ XÁC NHẬN:\n\nBạn đã in phiếu thành công chưa?\n\n- Bấm [OK] để LƯU DOANH THU & XÓA ĐƠN.\n- Bấm [Cancel] nếu bạn hủy in.");
+            
+            if (isPrinted) {
+                sendToGoogleSheet(totalMoney);
+                clearCart();
+            }
+            // Dọn dẹp DOM in
+            printSection.innerHTML = ''; 
+        }, 500);
     };
 
     // --- STATS ---

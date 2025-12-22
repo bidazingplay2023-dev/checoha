@@ -32,7 +32,7 @@ const formatK = (price: number) => (price / 1000) + "k";
 const App = () => {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
-    const [openSections, setOpenSections] = useState<Record<string, boolean>>({ "15k": true });
+    const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
     
     // UI State
     const [showConfirmModal, setShowConfirmModal] = useState(false);

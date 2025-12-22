@@ -107,6 +107,8 @@
             padding-bottom: 20px;
             scroll-behavior: smooth;
             min-height: 0; 
+            overscroll-behavior: contain;
+            touch-action: pan-y;
         }
         /* Hiển thị thanh cuộn một chút để user biết có thể cuộn */
         #left-panel::-webkit-scrollbar { width: 4px; }
@@ -237,6 +239,7 @@
             flex: 1; 
             background: white;
             overflow: hidden; 
+            min-height: 0; /* FIX QUAN TRỌNG: Giúp flex item con co lại đúng cách trên Safari */
         }
         
         #cart-header { 
@@ -263,7 +266,10 @@
             overflow-y: auto; 
             -webkit-overflow-scrolling: touch; /* QUAN TRỌNG */
             flex: 1; 
-            min-height: 80px; 
+            /* Bỏ min-height cứng để tránh xung đột với flex shrink khi không gian hẹp */
+            /* min-height: 80px; */ 
+            overscroll-behavior: contain;
+            touch-action: pan-y;
         }
         #cart-list::-webkit-scrollbar { width: 4px; }
         #cart-list::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.1); border-radius: 4px; }
@@ -510,11 +516,9 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body>
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
-<script type="module" src="/index.tsx"></script>
 </body>
 </html>

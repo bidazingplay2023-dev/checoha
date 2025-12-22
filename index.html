@@ -94,15 +94,17 @@
             flex-direction: column; 
             overflow: hidden; 
             position: relative;
+            height: 100%; /* Đảm bảo chiếm toàn bộ chiều cao còn lại */
         }
 
         /* --- LEFT PANEL (MENU) --- */
         #left-panel {
-            flex: 1;
+            flex: 1; /* Tự động chiếm khoảng trống còn lại, sẽ co lại nếu panel dưới to ra */
             overflow-y: auto;
-            padding: 10px; /* Giảm padding lề */
-            padding-bottom: 80px; /* Chừa chỗ cho cart header nếu cần */
+            padding: 10px;
+            padding-bottom: 20px;
             scroll-behavior: smooth;
+            min-height: 0; /* QUAN TRỌNG: Cho phép co nhỏ dưới mức nội dung */
         }
 
         /* Menu Sections Styles */
@@ -209,27 +211,31 @@
 
         /* --- RIGHT PANEL (CART) --- */
         #right-panel {
-            flex: 0 0 auto;
+            flex: 0 0 auto; /* Chiều cao tự động theo nội dung */
+            max-height: 60%; /* Cho phép Cart chiếm tới 60% màn hình (trước đây ít hơn) */
             background: var(--surface-color);
             border-top-left-radius: 16px;
             border-top-right-radius: 16px;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+            box-shadow: 0 -4px 25px rgba(0,0,0,0.1);
             z-index: 20;
             padding: 0;
             overflow: hidden;
             border-top: 1px solid #e2e8f0;
+            transition: max-height 0.2s ease;
         }
 
         #cart-container { 
             display: flex; 
             flex-direction: column; 
-            max-height: 40vh; 
+            flex: 1; /* Chiếm hết chiều cao cho phép của right-panel */
             background: white;
+            overflow: hidden; /* Xử lý scroll bên trong */
         }
         
         #cart-header { 
+            flex: 0 0 auto;
             padding: 10px 12px; 
             background: #fff;
             border-bottom: 1px solid #f1f5f9; 
@@ -251,7 +257,7 @@
             padding: 0 12px; 
             overflow-y: auto; 
             flex: 1; 
-            min-height: 60px;
+            min-height: 80px; /* Đảm bảo luôn có chỗ để hiện ít nhất 1-2 món */
         }
 
         .cart-item { 
@@ -325,6 +331,7 @@
 
         /* --- BOTTOM CONTROLS --- */
         #bottom-controls {
+            flex: 0 0 auto;
             padding: 12px;
             background: white;
             border-top: 1px solid #f1f5f9;
@@ -385,7 +392,7 @@
             .btn-stats-icon { width: 44px; height: 44px; }
 
             #left-panel { flex: 7; border-radius: 16px; padding-right: 16px; }
-            #right-panel { flex: 4; height: 100%; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 400px; }
+            #right-panel { flex: 4; height: 100%; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 400px; max-height: none; /* Reset max-height on Desktop */ }
             
             #cart-container { flex: 1; max-height: none; }
             #cart-list { max-height: none; padding: 0 16px;}
@@ -477,11 +484,9 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body>
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
-<script type="module" src="/index.tsx"></script>
 </body>
 </html>

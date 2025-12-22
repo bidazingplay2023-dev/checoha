@@ -221,32 +221,44 @@ const App = () => {
         cart.forEach(i => totalMoney += (i.price * i.quantity));
         setShowConfirmModal(false);
 
-        // Generate Print HTML String
-        let printHTML = '';
-        cart.forEach(item => {
-            const notePart = (item.note && item.note.trim() !== "") 
-                ? `<span class="sticker-custom-note">${item.note}</span>` 
-                : '';
-            for (let q = 0; q < item.quantity; q++) {
-                printHTML += `<div class="sticker"><span class="sticker-name">${item.name}</span>${notePart}</div>`;
-            }
-        });
-
         // Inject into DOM for printing
         const printSection = document.getElementById('print-section');
         if (printSection) {
+            // 1. Quan trọng: Reset sạch nội dung cũ để tránh lỗi trên Safari
+            printSection.innerHTML = '';
+            
+            // Generate Print HTML String
+            let printHTML = '';
+            cart.forEach(item => {
+                const notePart = (item.note && item.note.trim() !== "") 
+                    ? `<span class="sticker-custom-note">${item.note}</span>` 
+                    : '';
+                for (let q = 0; q < item.quantity; q++) {
+                    printHTML += `<div class="sticker"><span class="sticker-name">${item.name}</span>${notePart}</div>`;
+                }
+            });
+
+            // 2. Gán nội dung mới
             printSection.innerHTML = printHTML;
             
+            // 3. Tăng thời gian chờ một chút để DOM kịp render trên iPhone
             setTimeout(() => {
                 window.print();
+                
+                // 4. Kiểm tra xác nhận SAU khi cửa sổ in đóng lại (hoặc user hủy)
                 setTimeout(() => {
                     const isPrinted = window.confirm("🖨️ XÁC NHẬN:\n\nBạn đã in phiếu thành công chưa?\n\n- Bấm [OK] để LƯU DOANH THU & XÓA ĐƠN.\n- Bấm [Cancel] nếu bạn hủy in.");
+                    
                     if (isPrinted) {
                         sendToGoogleSheet(totalMoney);
                         clearCart();
-                        printSection.innerHTML = ''; // Clear print section
                     }
-                }, 1000);
+                    
+                    // QUAN TRỌNG: Luôn dọn dẹp vùng in sau khi hoàn tất quy trình (dù in hay hủy)
+                    // để Safari không bị "kẹt" nội dung ở lần in sau.
+                    if (printSection) printSection.innerHTML = ''; 
+                    
+                }, 500);
             }, 500);
         }
     };

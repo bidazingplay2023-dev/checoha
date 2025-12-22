@@ -21,14 +21,15 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         html, body { 
-            height: 100%; 
+            height: 100%;
+            height: 100dvh; /* Fix lỗi thanh địa chỉ Safari che mất nội dung */
             margin: 0; 
             padding: 0; 
             overflow: hidden; 
             font-family: 'Roboto', sans-serif; 
             background-color: var(--bg-body); 
             color: var(--text-main);
-            font-size: 14px; /* Base font nhỏ hơn chút cho mobile */
+            font-size: 14px; 
         }
 
         /* --- LAYOUT CONTAINER --- */
@@ -44,7 +45,7 @@
         /* --- 1. TOP BAR (COMPACT) --- */
         #top-bar {
             flex: 0 0 auto;
-            padding: 8px 12px; /* Giảm padding */
+            padding: 8px 12px;
             background: var(--surface-color);
             z-index: 10;
             display: flex;
@@ -56,7 +57,7 @@
 
         #search-box { 
             flex: 1;
-            padding: 8px 16px; /* Nhỏ gọn hơn */
+            padding: 8px 16px; 
             border: 1px solid #e2e8f0; 
             border-radius: 99px; 
             font-size: 14px; 
@@ -72,7 +73,7 @@
         }
         
         .btn-stats-icon {
-            width: 36px; /* Nhỏ hơn */
+            width: 36px;
             height: 36px;
             border-radius: 10px;
             border: none;
@@ -94,34 +95,38 @@
             flex-direction: column; 
             overflow: hidden; 
             position: relative;
-            height: 100%; /* Đảm bảo chiếm toàn bộ chiều cao còn lại */
+            height: 100%; 
         }
 
         /* --- LEFT PANEL (MENU) --- */
         #left-panel {
-            flex: 1; /* Tự động chiếm khoảng trống còn lại, sẽ co lại nếu panel dưới to ra */
+            flex: 1; 
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch; /* QUAN TRỌNG: Cuộn mượt trên iOS */
             padding: 10px;
             padding-bottom: 20px;
             scroll-behavior: smooth;
-            min-height: 0; /* QUAN TRỌNG: Cho phép co nhỏ dưới mức nội dung */
+            min-height: 0; 
         }
+        /* Hiển thị thanh cuộn một chút để user biết có thể cuộn */
+        #left-panel::-webkit-scrollbar { width: 4px; }
+        #left-panel::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.1); border-radius: 4px; }
 
         /* Menu Sections Styles */
         .menu-section { 
-            margin-bottom: 12px; /* Giảm khoảng cách giữa các nhóm */
+            margin-bottom: 12px; 
             border-radius: var(--radius-md);
         }
         
         .section-title { 
             font-weight: 700; 
-            font-size: 13px; /* Font nhỏ hơn */
+            font-size: 13px; 
             text-transform: uppercase; 
             margin-bottom: 8px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            padding: 8px 12px; /* Compact padding */
+            padding: 8px 12px; 
             cursor: pointer; 
             user-select: none;
             border-radius: 8px;
@@ -158,13 +163,13 @@
         .group-grid { 
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
-            gap: 8px; /* Grid khít hơn */
+            gap: 8px; 
         }
 
         /* COMPACT Card Món Ăn */
         .btn-che { 
             width: 100%; 
-            min-height: 60px; /* Chiều cao tối thiểu giảm từ 80 -> 60 */
+            min-height: 60px; 
             padding: 8px; 
             background-color: var(--surface-color); 
             color: var(--text-main); 
@@ -189,7 +194,7 @@
         .btn-che:active { transform: translateY(1px); background-color: #f8fafc; }
 
         .che-name { 
-            font-size: 12px; /* Font tên món nhỏ hơn */
+            font-size: 12px; 
             font-weight: 600; 
             line-height: 1.3; 
             margin-bottom: 2px; 
@@ -201,7 +206,7 @@
         }
         
         .che-price { 
-            font-size: 10px; /* Giá nhỏ hơn */
+            font-size: 10px; 
             color: #64748b; 
             font-weight: 500; 
             background: #f1f5f9; 
@@ -211,8 +216,8 @@
 
         /* --- RIGHT PANEL (CART) --- */
         #right-panel {
-            flex: 0 0 auto; /* Chiều cao tự động theo nội dung */
-            max-height: 60%; /* Cho phép Cart chiếm tới 60% màn hình (trước đây ít hơn) */
+            flex: 0 0 auto; 
+            max-height: 60%; 
             background: var(--surface-color);
             border-top-left-radius: 16px;
             border-top-right-radius: 16px;
@@ -229,9 +234,9 @@
         #cart-container { 
             display: flex; 
             flex-direction: column; 
-            flex: 1; /* Chiếm hết chiều cao cho phép của right-panel */
+            flex: 1; 
             background: white;
-            overflow: hidden; /* Xử lý scroll bên trong */
+            overflow: hidden; 
         }
         
         #cart-header { 
@@ -256,12 +261,15 @@
         #cart-list { 
             padding: 0 12px; 
             overflow-y: auto; 
+            -webkit-overflow-scrolling: touch; /* QUAN TRỌNG */
             flex: 1; 
-            min-height: 80px; /* Đảm bảo luôn có chỗ để hiện ít nhất 1-2 món */
+            min-height: 80px; 
         }
+        #cart-list::-webkit-scrollbar { width: 4px; }
+        #cart-list::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.1); border-radius: 4px; }
 
         .cart-item { 
-            padding: 10px 0; /* Giảm padding item */
+            padding: 10px 0; 
             border-bottom: 1px solid #f1f5f9; 
         }
 
@@ -284,7 +292,7 @@
         
         /* Compact Buttons */
         .qty-btn { 
-            width: 30px; /* Nhỏ hơn (36 -> 30) */
+            width: 30px; 
             height: 30px; 
             border-radius: 8px; 
             border: 1px solid #e2e8f0; 
@@ -344,7 +352,7 @@
         }
         #total-bar span:first-child { font-size: 13px; font-weight: 600; color: #64748b; }
         #total-price { 
-            font-size: 20px !important; /* Giá vừa phải, không quá to */
+            font-size: 20px !important; 
             color: #0f172a; 
             font-weight: 800; 
             line-height: 1;
@@ -353,7 +361,7 @@
         .action-row { display: flex; gap: 10px; margin-bottom: 0; }
         .action-btn { 
             flex: 1; 
-            padding: 12px; /* Button thấp hơn chút */
+            padding: 12px; 
             font-size: 14px; 
             border: none; 
             border-radius: 10px; 
@@ -392,7 +400,7 @@
             .btn-stats-icon { width: 44px; height: 44px; }
 
             #left-panel { flex: 7; border-radius: 16px; padding-right: 16px; }
-            #right-panel { flex: 4; height: 100%; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 400px; max-height: none; /* Reset max-height on Desktop */ }
+            #right-panel { flex: 4; height: 100%; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 400px; max-height: none; }
             
             #cart-container { flex: 1; max-height: none; }
             #cart-list { max-height: none; padding: 0 16px;}
@@ -439,6 +447,7 @@
             padding: 12px; 
             background: #f8fafc;
             font-size: 13px;
+            -webkit-overflow-scrolling: touch; /* QUAN TRỌNG */
         }
         .confirm-row { border-bottom: 1px dashed #cbd5e1; padding-bottom: 8px; margin-bottom: 8px; }
         
@@ -467,9 +476,26 @@
         
         @media print {
             @page { margin: 0; } 
-            body { margin: 0; padding: 0; background: white; overflow: visible; height: auto; } 
+            /* Fix lỗi trang trắng trên iOS: Phải set height auto và overflow visible */
+            html, body { 
+                height: auto !important; 
+                overflow: visible !important; 
+                margin: 0 !important; 
+                padding: 0 !important;
+                background: white !important;
+            }
             #ui-container, .modal-overlay, #toast, .security-note { display: none !important; }
-            #print-section { display: block !important; width: 100%; background-color: white; }
+            
+            #print-section { 
+                display: block !important; 
+                position: absolute; /* Đảm bảo nó nằm trên cùng */
+                top: 0; 
+                left: 0; 
+                width: 100%; 
+                background-color: white; 
+                z-index: 9999;
+            }
+            
             .sticker { width: 100%; padding: 1mm 0; display: flex; flex-direction: column; justify-content: center; align-items: center; page-break-after: always; break-after: page; }
             .sticker-name { font-family: 'Roboto', Arial, sans-serif !important; font-size: 22px; font-weight: 900; text-transform: uppercase; line-height: 1; text-align: center; color: #000; }
             .sticker-custom-note { font-family: 'Roboto', Arial, sans-serif !important; font-size: 15px; font-weight: bold; background-color: #000; color: #fff !important; padding: 2px 8px; border-radius: 4px; margin-top: 3px; text-align: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -484,9 +510,11 @@
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body>
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>

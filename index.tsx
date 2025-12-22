@@ -240,19 +240,17 @@ const App = () => {
     const processPrintAndSave = () => {
         let totalMoney = 0;
         cart.forEach(i => totalMoney += (i.price * (Number(i.quantity) || 0)));
-        
+        setShowConfirmModal(false);
+
         const printSection = document.getElementById('print-section');
         if (printSection) {
             printSection.innerHTML = '';
             let printHTML = '';
-            
             cart.forEach(item => {
                 const notePart = (item.note && item.note.trim() !== "") 
                     ? `<span class="sticker-custom-note">${item.note}</span>` 
                     : '';
                 const qty = Number(item.quantity) || 0;
-                
-                // Generate a sticker for EACH item quantity
                 for (let q = 0; q < qty; q++) {
                     printHTML += `<div class="sticker"><span class="sticker-name">${item.name}</span>${notePart}</div>`;
                 }
@@ -260,18 +258,14 @@ const App = () => {
 
             printSection.innerHTML = printHTML;
             
-            // Allow DOM to update then Print
             setTimeout(() => {
                 window.print();
-                
-                // Ask for confirmation AFTER print dialog closes
                 setTimeout(() => {
                     const isPrinted = window.confirm("🖨️ XÁC NHẬN:\n\nBạn đã in phiếu thành công chưa?\n\n- Bấm [OK] để LƯU DOANH THU & XÓA ĐƠN.\n- Bấm [Cancel] nếu bạn hủy in.");
                     
                     if (isPrinted) {
                         sendToGoogleSheet(totalMoney);
                         clearCart();
-                        setShowConfirmModal(false); // Close modal here
                     }
                     if (printSection) printSection.innerHTML = ''; 
                 }, 500);

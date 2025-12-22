@@ -5,19 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Chè Cô Hà (Modern UI)</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <script type="importmap">
-    {
-      "imports": {
-        "path": "https://esm.sh/path@^0.12.7",
-        "vite": "https://esm.sh/vite@^7.3.0",
-        "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-        "url": "https://esm.sh/url@^0.11.4",
-        "react/": "https://esm.sh/react@^19.2.3/",
-        "react": "https://esm.sh/react@^19.2.3",
-        "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
-      }
-    }
-    </script>
     <style>
         /* --- RESET & GLOBAL VARS --- */
         :root {
@@ -336,95 +323,29 @@
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
 
         @media print {
-            @page { 
-                /* AUTO SIZE: Quan trọng để khớp với khổ giấy người dùng chọn */
-                size: auto; 
-                margin: 0mm; 
-            } 
-            
-            html, body { 
-                width: 100%; 
-                height: 100%; 
-                margin: 0 !important; 
-                padding: 0 !important; 
-                overflow: visible !important; 
-                background: white !important;
-            }
-
-            /* Hide UI */
-            #ui-container, .modal-overlay, #toast { 
-                display: none !important; 
-            }
-
-            /* Show Print Section */
-            #print-section { 
-                display: block !important; 
-                width: 100% !important; 
-                height: auto !important;
-                background-color: white; 
-                overflow: visible !important;
-                z-index: 9999; 
-            }
-
-            .sticker { 
-                width: 100%; 
-                height: 100%; /* Cố gắng chiếm toàn bộ trang (1 tem/trang) */
-                box-sizing: border-box;
-                padding: 2mm; /* Padding tối thiểu */
-                
-                display: flex; 
-                flex-direction: column; 
-                justify-content: center; /* Căn giữa dọc */
-                align-items: center; /* Căn giữa ngang */
-                
-                /* Page break logic */
-                page-break-after: always !important; 
-                break-after: page !important; 
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
-            }
-
-            .sticker-name { 
-                font-family: 'Roboto', Arial, sans-serif !important; 
-                font-size: 22px; 
-                font-weight: 900; 
-                text-transform: uppercase; 
-                line-height: 1.1; 
-                text-align: center; 
-                color: #000; 
-                
-                /* Đảm bảo text không bị mất nếu giấy quá nhỏ */
-                word-wrap: break-word; 
-                overflow-wrap: break-word;
-                max-width: 100%;
-            }
-
-            .sticker-custom-note { 
-                font-family: 'Roboto', Arial, sans-serif !important; 
-                font-size: 16px; 
-                font-weight: bold; 
-                background-color: #000; 
-                color: #fff !important; 
-                padding: 4px 10px; 
-                border-radius: 4px; 
-                margin-top: 5px; 
-                text-align: center; 
-                -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact; 
-                
-                /* Wrap text cho note */
-                word-wrap: break-word;
-                overflow-wrap: break-word;
-                max-width: 100%;
-            }
+            @page { margin: 0; } 
+            html, body { height: auto !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; background: white !important; }
+            #ui-container, .modal-overlay, #toast { display: none !important; }
+            #print-section { display: block !important; position: absolute; top: 0; left: 0; width: 100%; background-color: white; z-index: 9999; }
+            .sticker { width: 100%; padding: 1mm 0; display: flex; flex-direction: column; justify-content: center; align-items: center; page-break-after: always; break-after: page; }
+            .sticker-name { font-family: 'Roboto', Arial, sans-serif !important; font-size: 22px; font-weight: 900; text-transform: uppercase; line-height: 1; text-align: center; color: #000; }
+            .sticker-custom-note { font-family: 'Roboto', Arial, sans-serif !important; font-size: 15px; font-weight: bold; background-color: #000; color: #fff !important; padding: 2px 8px; border-radius: 4px; margin-top: 3px; text-align: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
 <link rel="stylesheet" href="/index.css">
 </head>
 <body>
     <div id="root"></div>
-    <!-- Container for printing logic -->
-    <div id="print-section"></div>
-    <script type="module" src="/index.tsx"></script>
+    <script type="module" src="./index.tsx"></script>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>

@@ -357,234 +357,236 @@ const App = () => {
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
     return (
-        <div id="ui-container">
-            {/* TOP BAR */}
-            <div id="top-bar">
-                <input 
-                    type="text" 
-                    id="search-box" 
-                    placeholder="🔍 Tìm nhanh (gõ tên món)..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <button 
-                    type="button"
-                    className="btn-stats-icon" 
-                    onClick={handleAskPassword} 
-                    title="Thống kê"
-                >
-                    📊
-                </button>
-            </div>
-
-            {/* MAIN SPLIT VIEW */}
-            <div id="main-split-view">
-                {/* LEFT PANEL */}
-                <div id="left-panel">
-                    <div id="menu-area">
-                        {renderMenuSection(filteredMenu.filter(i => i.price === 15000), 'bg-15k', '15K - ĐỒNG GIÁ', '15k')}
-                        {renderMenuSection(filteredMenu.filter(i => i.price === 20000), 'bg-20k', '20K - ĐỒNG GIÁ', '20k')}
-                        {renderMenuSection(filteredMenu.filter(i => i.price >= 25000), 'bg-high', '25K+ (CAO CẤP)', 'high')}
-                    </div>
-                    <div style={{ height: '20px' }}></div>
+        <React.Fragment>
+            <div id="ui-container">
+                {/* TOP BAR */}
+                <div id="top-bar">
+                    <input 
+                        type="text" 
+                        id="search-box" 
+                        placeholder="🔍 Tìm nhanh (gõ tên món)..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <button 
+                        type="button"
+                        className="btn-stats-icon" 
+                        onClick={handleAskPassword} 
+                        title="Thống kê"
+                    >
+                        📊
+                    </button>
                 </div>
 
-                {/* RIGHT PANEL */}
-                <div id="right-panel">
-                    <div id="cart-container">
-                        <div id="cart-header">
-                            <span><span style={{ fontSize: '16px' }}>🛒</span> Đơn đang chọn</span>
-                            <span style={{ background: '#e3f2fd', color: '#1565c0', padding: '2px 8px', borderRadius: '10px', fontSize: '12px' }}>
-                                SL: <b id="count-display">{cartCount}</b>
-                            </span>
+                {/* MAIN SPLIT VIEW */}
+                <div id="main-split-view">
+                    {/* LEFT PANEL */}
+                    <div id="left-panel">
+                        <div id="menu-area">
+                            {renderMenuSection(filteredMenu.filter(i => i.price === 15000), 'bg-15k', '15K - ĐỒNG GIÁ', '15k')}
+                            {renderMenuSection(filteredMenu.filter(i => i.price === 20000), 'bg-20k', '20K - ĐỒNG GIÁ', '20k')}
+                            {renderMenuSection(filteredMenu.filter(i => i.price >= 25000), 'bg-high', '25K+ (CAO CẤP)', 'high')}
                         </div>
-                        <div id="cart-list" ref={cartListRef}>
-                            {cart.length === 0 ? (
-                                <div style={{ textAlign: 'center', padding: '15px', color: '#aaa', fontSize: '12px', fontStyle: 'italic' }}>
-                                    Chưa chọn món nào<br />Hãy bấm vào menu ở trên
-                                </div>
-                            ) : (
-                                cart.map((item, i) => {
-                                    return (
-                                        <div className="cart-item" key={i}>
-                                            <div className="item-row-top">
-                                                <div className="item-left">
-                                                    <span className="item-qty-badge">x{item.quantity}</span>
-                                                    <span className="item-name">{item.name}</span>
-                                                </div>
-                                                <div className="item-right">
-                                                    <div className="qty-btn" onClick={() => changeQty(i, -1)}>-</div>
-                                                    <div className="qty-btn" onClick={() => changeQty(i, 1)}>+</div>
-                                                    <div className="delete-btn" onClick={() => removeLine(i)}>✕</div>
-                                                </div>
-                                            </div>
-                                            <div className="option-row">
-                                                <label style={{ display: 'flex', alignItems: 'center', width: '100%', cursor: 'pointer' }}>
-                                                    <input 
-                                                        type="checkbox" 
-                                                        checked={item.isNoteOpen} 
-                                                        onChange={(e) => toggleNote(i, e.target.checked)}
-                                                        style={{ marginRight: '5px' }} 
-                                                    /> Ghi chú
-                                                </label>
-                                            </div>
-                                            {item.isNoteOpen && (
-                                                <div style={{ display: 'block' }}>
-                                                    <input 
-                                                        type="text" 
-                                                        className="note-input" 
-                                                        placeholder="Nhập ghi chú..." 
-                                                        value={item.note} 
-                                                        ref={(el) => { noteInputsRef.current[i] = el; }}
-                                                        onChange={(e) => updateNote(i, e.target.value)}
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-                                    )
-                                })
-                            )}
-                        </div>
+                        <div style={{ height: '20px' }}></div>
                     </div>
 
-                    <div id="bottom-controls">
-                        <div id="total-bar">
-                            <span>TỔNG TIỀN:</span>
-                            <span id="total-price" style={{ fontSize: '20px' }}>{formatK(cartTotal)}</span>
-                        </div>
-                        <div className="action-row">
-                            <button id="btn-print" className="action-btn" onClick={() => cart.length > 0 ? setShowConfirmModal(true) : alert("Chưa chọn món nào!")}>
-                                🖨️ IN & LƯU
-                            </button>
-                        </div>
-                        <div className="action-row" style={{ marginTop: '6px' }}>
-                            <button id="btn-clear" className="action-btn" onClick={clearCart}>🗑️ Xóa mới</button>
-                        </div>
-                        <div className="security-note">Dữ liệu được bảo mật bởi Google</div>
-                    </div>
-                </div>
-            </div>
-
-            {/* CONFIRM MODAL */}
-            {showConfirmModal && (
-                <div id="confirm-modal" className="modal-overlay">
-                    <div className="modal-box">
-                        <div className="modal-title">XÁC NHẬN ĐƠN HÀNG</div>
-                        <div className="confirm-list">
-                            {cart.map((item, idx) => (
-                                <div className="confirm-row" key={idx}>
-                                    <div style={{ flex: 1 }}>
-                                        <b>x{item.quantity}</b> {item.name} 
-                                        {item.note && <><br /><small style={{ color: 'red', fontStyle: 'italic' }}>({item.note})</small></>}
+                    {/* RIGHT PANEL */}
+                    <div id="right-panel">
+                        <div id="cart-container">
+                            <div id="cart-header">
+                                <span><span style={{ fontSize: '16px' }}>🛒</span> Đơn đang chọn</span>
+                                <span style={{ background: '#e3f2fd', color: '#1565c0', padding: '2px 8px', borderRadius: '10px', fontSize: '12px' }}>
+                                    SL: <b id="count-display">{cartCount}</b>
+                                </span>
+                            </div>
+                            <div id="cart-list" ref={cartListRef}>
+                                {cart.length === 0 ? (
+                                    <div style={{ textAlign: 'center', padding: '15px', color: '#aaa', fontSize: '12px', fontStyle: 'italic' }}>
+                                        Chưa chọn món nào<br />Hãy bấm vào menu ở trên
                                     </div>
-                                    <div style={{ fontWeight: 'bold' }}>{formatK(item.price * item.quantity)}</div>
-                                </div>
-                            ))}
+                                ) : (
+                                    cart.map((item, i) => {
+                                        return (
+                                            <div className="cart-item" key={i}>
+                                                <div className="item-row-top">
+                                                    <div className="item-left">
+                                                        <span className="item-qty-badge">x{item.quantity}</span>
+                                                        <span className="item-name">{item.name}</span>
+                                                    </div>
+                                                    <div className="item-right">
+                                                        <div className="qty-btn" onClick={() => changeQty(i, -1)}>-</div>
+                                                        <div className="qty-btn" onClick={() => changeQty(i, 1)}>+</div>
+                                                        <div className="delete-btn" onClick={() => removeLine(i)}>✕</div>
+                                                    </div>
+                                                </div>
+                                                <div className="option-row">
+                                                    <label style={{ display: 'flex', alignItems: 'center', width: '100%', cursor: 'pointer' }}>
+                                                        <input 
+                                                            type="checkbox" 
+                                                            checked={item.isNoteOpen} 
+                                                            onChange={(e) => toggleNote(i, e.target.checked)}
+                                                            style={{ marginRight: '5px' }} 
+                                                        /> Ghi chú
+                                                    </label>
+                                                </div>
+                                                {item.isNoteOpen && (
+                                                    <div style={{ display: 'block' }}>
+                                                        <input 
+                                                            type="text" 
+                                                            className="note-input" 
+                                                            placeholder="Nhập ghi chú..." 
+                                                            value={item.note} 
+                                                            ref={(el) => { noteInputsRef.current[i] = el; }}
+                                                            onChange={(e) => updateNote(i, e.target.value)}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    })
+                                )}
+                            </div>
                         </div>
-                        <div className="confirm-total">Tổng: {formatK(cartTotal)}</div>
-                        <div className="modal-btn-group">
-                            <button className="modal-btn btn-cancel" onClick={() => setShowConfirmModal(false)}>Sửa lại</button>
-                            <button className="modal-btn btn-confirm" onClick={processPrintAndSave}>✅ IN NGAY</button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
-            {/* PASSWORD MODAL (MỚI: Thêm Ẩn/Hiện và Báo lỗi) */}
-            {showPasswordModal && (
-                <div id="password-modal" className="modal-overlay">
-                    <div className="modal-box" style={{ maxWidth: '350px' }}>
-                        <div className="modal-title">NHẬP MẬT KHẨU QUẢN LÝ</div>
-                        <div style={{ padding: '20px 0' }}>
-                            <div style={{ display: 'flex', gap: '5px' }}>
-                                <input 
-                                    type={showPasswordChars ? "text" : "password"}
-                                    className="note-input" 
-                                    style={{ fontSize: '16px', padding: '10px', flex: 1 }}
-                                    placeholder="Nhập mật khẩu..." 
-                                    value={passwordInput}
-                                    onChange={(e) => setPasswordInput(e.target.value)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') handlePasswordSubmit(); }}
-                                    autoFocus
-                                />
-                                <button 
-                                    onClick={() => setShowPasswordChars(!showPasswordChars)}
-                                    style={{
-                                        width: '40px',
-                                        background: '#eee',
-                                        border: '1px solid #ddd',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer',
-                                        fontSize: '18px'
-                                    }}
-                                    title={showPasswordChars ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                                >
-                                    {showPasswordChars ? "🚫" : "👁️"}
+                        <div id="bottom-controls">
+                            <div id="total-bar">
+                                <span>TỔNG TIỀN:</span>
+                                <span id="total-price" style={{ fontSize: '20px' }}>{formatK(cartTotal)}</span>
+                            </div>
+                            <div className="action-row">
+                                <button id="btn-print" className="action-btn" onClick={() => cart.length > 0 ? setShowConfirmModal(true) : alert("Chưa chọn món nào!")}>
+                                    🖨️ IN & LƯU
                                 </button>
                             </div>
-                            {passwordError && (
-                                <div style={{ 
-                                    color: '#d32f2f', 
-                                    fontSize: '13px', 
-                                    marginTop: '8px', 
-                                    fontStyle: 'italic',
-                                    fontWeight: 'bold'
-                                }}>
-                                    ⚠️ {passwordError}
-                                </div>
-                            )}
-                            {isLoading && !showStatsModal && (
-                                <div style={{ fontSize: '12px', marginTop: '8px', color: '#666', textAlign: 'center' }}>Đang kiểm tra...</div>
-                            )}
-                        </div>
-                        <div className="modal-btn-group">
-                            <button className="modal-btn btn-cancel" onClick={() => setShowPasswordModal(false)}>Hủy</button>
-                            <button className="modal-btn btn-confirm" onClick={handlePasswordSubmit}>XEM</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* STATS MODAL */}
-            {showStatsModal && (
-                <div id="stats-modal" className="modal-overlay">
-                    <div className="modal-box">
-                        <div className="modal-title">DOANH THU</div>
-                        {isLoading && <div id="loading" style={{ display: 'block' }}>Đang tải dữ liệu...</div>}
-                        {!isLoading && (
-                            <div id="stats-content">
-                                <div className="tabs-container">
-                                    <button className={`tab-btn ${currentTab === 'today' ? 'active' : ''}`} onClick={() => setCurrentTab('today')}>HÔM NAY</button>
-                                    <button className={`tab-btn ${currentTab === 'month' ? 'active' : ''}`} onClick={() => setCurrentTab('month')}>THÁNG</button>
-                                    <button className={`tab-btn ${currentTab === 'year' ? 'active' : ''}`} onClick={() => setCurrentTab('year')}>NĂM</button>
-                                    <button className={`tab-btn ${currentTab === 'custom' ? 'active' : ''}`} onClick={() => setCurrentTab('custom')}>KHÁC</button>
-                                </div>
-                                <div className="stat-display-area">
-                                    <div className="stat-big-value" style={{ color: statsDisplay.color }}>{statsDisplay.value}</div>
-                                    <div className="stat-label">{statsDisplay.label}</div>
-                                    {currentTab === 'custom' && (
-                                        <div id="date-picker-area" style={{ display: 'flex' }}>
-                                            <input type="date" className="date-input" onChange={(e) => setCustomDate(e.target.value)} />
-                                            <button className="btn-search-date" onClick={lookupDate}>🔍 Tra cứu</button>
-                                        </div>
-                                    )}
-                                    <div className="stat-count-info">Tổng đơn đã in: <b style={{ color: '#333' }}>{stats.count}</b></div>
-                                </div>
+                            <div className="action-row" style={{ marginTop: '6px' }}>
+                                <button id="btn-clear" className="action-btn" onClick={clearCart}>🗑️ Xóa mới</button>
                             </div>
-                        )}
-                        <div className="modal-btn-group">
-                            <button className="modal-btn btn-cancel" onClick={() => setShowStatsModal(false)}>Đóng</button>
+                            <div className="security-note">Dữ liệu được bảo mật bởi Google</div>
                         </div>
                     </div>
                 </div>
-            )}
 
-            {/* TOAST */}
-            <div id="toast" className={toastMessage ? 'show' : ''}>{toastMessage}</div>
-            
-            {/* PRINT SECTION (Hidden) */}
+                {/* CONFIRM MODAL */}
+                {showConfirmModal && (
+                    <div id="confirm-modal" className="modal-overlay">
+                        <div className="modal-box">
+                            <div className="modal-title">XÁC NHẬN ĐƠN HÀNG</div>
+                            <div className="confirm-list">
+                                {cart.map((item, idx) => (
+                                    <div className="confirm-row" key={idx}>
+                                        <div style={{ flex: 1 }}>
+                                            <b>x{item.quantity}</b> {item.name} 
+                                            {item.note && <><br /><small style={{ color: 'red', fontStyle: 'italic' }}>({item.note})</small></>}
+                                        </div>
+                                        <div style={{ fontWeight: 'bold' }}>{formatK(item.price * item.quantity)}</div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="confirm-total">Tổng: {formatK(cartTotal)}</div>
+                            <div className="modal-btn-group">
+                                <button className="modal-btn btn-cancel" onClick={() => setShowConfirmModal(false)}>Sửa lại</button>
+                                <button className="modal-btn btn-confirm" onClick={processPrintAndSave}>✅ IN NGAY</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* PASSWORD MODAL (MỚI: Thêm Ẩn/Hiện và Báo lỗi) */}
+                {showPasswordModal && (
+                    <div id="password-modal" className="modal-overlay">
+                        <div className="modal-box" style={{ maxWidth: '350px' }}>
+                            <div className="modal-title">NHẬP MẬT KHẨU QUẢN LÝ</div>
+                            <div style={{ padding: '20px 0' }}>
+                                <div style={{ display: 'flex', gap: '5px' }}>
+                                    <input 
+                                        type={showPasswordChars ? "text" : "password"}
+                                        className="note-input" 
+                                        style={{ fontSize: '16px', padding: '10px', flex: 1 }}
+                                        placeholder="Nhập mật khẩu..." 
+                                        value={passwordInput}
+                                        onChange={(e) => setPasswordInput(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') handlePasswordSubmit(); }}
+                                        autoFocus
+                                    />
+                                    <button 
+                                        onClick={() => setShowPasswordChars(!showPasswordChars)}
+                                        style={{
+                                            width: '40px',
+                                            background: '#eee',
+                                            border: '1px solid #ddd',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer',
+                                            fontSize: '18px'
+                                        }}
+                                        title={showPasswordChars ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                                    >
+                                        {showPasswordChars ? "🚫" : "👁️"}
+                                    </button>
+                                </div>
+                                {passwordError && (
+                                    <div style={{ 
+                                        color: '#d32f2f', 
+                                        fontSize: '13px', 
+                                        marginTop: '8px', 
+                                        fontStyle: 'italic',
+                                        fontWeight: 'bold'
+                                    }}>
+                                        ⚠️ {passwordError}
+                                    </div>
+                                )}
+                                {isLoading && !showStatsModal && (
+                                    <div style={{ fontSize: '12px', marginTop: '8px', color: '#666', textAlign: 'center' }}>Đang kiểm tra...</div>
+                                )}
+                            </div>
+                            <div className="modal-btn-group">
+                                <button className="modal-btn btn-cancel" onClick={() => setShowPasswordModal(false)}>Hủy</button>
+                                <button className="modal-btn btn-confirm" onClick={handlePasswordSubmit}>XEM</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* STATS MODAL */}
+                {showStatsModal && (
+                    <div id="stats-modal" className="modal-overlay">
+                        <div className="modal-box">
+                            <div className="modal-title">DOANH THU</div>
+                            {isLoading && <div id="loading" style={{ display: 'block' }}>Đang tải dữ liệu...</div>}
+                            {!isLoading && (
+                                <div id="stats-content">
+                                    <div className="tabs-container">
+                                        <button className={`tab-btn ${currentTab === 'today' ? 'active' : ''}`} onClick={() => setCurrentTab('today')}>HÔM NAY</button>
+                                        <button className={`tab-btn ${currentTab === 'month' ? 'active' : ''}`} onClick={() => setCurrentTab('month')}>THÁNG</button>
+                                        <button className={`tab-btn ${currentTab === 'year' ? 'active' : ''}`} onClick={() => setCurrentTab('year')}>NĂM</button>
+                                        <button className={`tab-btn ${currentTab === 'custom' ? 'active' : ''}`} onClick={() => setCurrentTab('custom')}>KHÁC</button>
+                                    </div>
+                                    <div className="stat-display-area">
+                                        <div className="stat-big-value" style={{ color: statsDisplay.color }}>{statsDisplay.value}</div>
+                                        <div className="stat-label">{statsDisplay.label}</div>
+                                        {currentTab === 'custom' && (
+                                            <div id="date-picker-area" style={{ display: 'flex' }}>
+                                                <input type="date" className="date-input" onChange={(e) => setCustomDate(e.target.value)} />
+                                                <button className="btn-search-date" onClick={lookupDate}>🔍 Tra cứu</button>
+                                            </div>
+                                        )}
+                                        <div className="stat-count-info">Tổng đơn đã in: <b style={{ color: '#333' }}>{stats.count}</b></div>
+                                    </div>
+                                </div>
+                            )}
+                            <div className="modal-btn-group">
+                                <button className="modal-btn btn-cancel" onClick={() => setShowStatsModal(false)}>Đóng</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* TOAST */}
+                <div id="toast" className={toastMessage ? 'show' : ''}>{toastMessage}</div>
+            </div>
+
+            {/* PRINT SECTION (Moved outside ui-container) */}
             <div id="print-section"></div>
-        </div>
+        </React.Fragment>
     );
 };
 

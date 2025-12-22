@@ -33,9 +33,12 @@
             background: #fff;
             border-bottom: 1px solid #ddd;
             z-index: 10;
+            display: flex; /* Sắp xếp ngang */
+            align-items: center;
+            gap: 10px;
         }
         #search-box { 
-            width: 100%; 
+            flex: 1; /* Tự động chiếm khoảng trống còn lại */
             padding: 10px 15px; 
             border: 1px solid #ddd; 
             border-radius: 20px; 
@@ -44,6 +47,27 @@
             background: #f9f9f9;
         }
         #search-box:focus { background: #fff; border-color: #2196f3; }
+        
+        /* Nút thống kê icon nhỏ gọn */
+        .btn-stats-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background-color: #f3e5f5;
+            color: #7b1fa2;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+        .btn-stats-icon:active {
+            background-color: #e1bee7;
+            transform: scale(0.95);
+        }
 
         /* 2. KHU VỰC GIỮA (CHỨA MENU VÀ CART TRÊN PC) */
         #main-split-view {
@@ -228,7 +252,7 @@
         }
 
         /* --- MODAL CSS (Giữ nguyên) --- */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         .modal-box { background: white; width: 90%; max-width: 450px; border-radius: 12px; padding: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: left; max-height: 85vh; display: flex; flex-direction: column; }
         .modal-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; text-align: center; color: #333; border-bottom: 1px solid #eee; padding-bottom: 8px;}
         .confirm-list { overflow-y: auto; margin-bottom: 10px; flex-grow: 1; border: 1px solid #f0f0f0; border-radius: 6px; padding: 8px; background: #fafafa;}
@@ -267,382 +291,20 @@
             .sticker-custom-note { font-family: 'Roboto', Arial, sans-serif !important; font-size: 15px; font-weight: bold; background-color: #000; color: #fff !important; padding: 2px 8px; border-radius: 4px; margin-top: 3px; text-align: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body>
-    <div id="ui-container">
-        <!-- TOP BAR: SEARCH -->
-        <div id="top-bar">
-            <input type="text" id="search-box" placeholder="🔍 Tìm nhanh (gõ tên món)..." onkeyup="filterMenu()">
-        </div>
-
-        <!-- SPLIT VIEW: MENU (SCROLL) & CART (FIXED) -->
-        <div id="main-split-view">
-            <!-- LEFT PANEL: MENU -->
-            <div id="left-panel">
-                <div id="menu-area"></div>
-                <!-- Spacer để nội dung cuối không bị che trên một số máy -->
-                <div style="height: 20px;"></div> 
-            </div>
-
-            <!-- RIGHT PANEL: CART & CONTROLS -->
-            <div id="right-panel">
-                <div id="cart-container">
-                    <div id="cart-header">
-                        <span><span style="font-size:16px">🛒</span> Đơn đang chọn</span>
-                        <span style="background:#e3f2fd; color:#1565c0; padding:2px 8px; border-radius:10px; font-size:12px;">SL: <b id="count-display">0</b></span>
-                    </div>
-                    <div id="cart-list">
-                        <div style="text-align:center; padding: 15px; color:#aaa; font-size:12px; font-style:italic;">
-                            Chưa chọn món nào<br>Hãy bấm vào menu ở trên
-                        </div>
-                    </div>
-                </div>
-
-                <div id="bottom-controls">
-                    <div id="total-bar"><span>TỔNG TIỀN:</span><span id="total-price" style="font-size:20px;">0k</span></div>
-                    <div class="action-row">
-                        <button id="btn-print" class="action-btn" onclick="showConfirmDialog()">🖨️ IN & LƯU</button>
-                    </div>
-                    <div class="action-row" style="margin-top:6px;">
-                        <button id="btn-stats" class="action-btn" onclick="askPassword()">📊 Thống kê</button>
-                        <button id="btn-clear" class="action-btn" onclick="clearCart()">🗑️ Xóa mới</button>
-                    </div>
-                    <div class="security-note">Dữ liệu được bảo mật bởi Google</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODALS & HIDDEN ELEMENTS (Giữ nguyên logic) -->
-    <div id="confirm-modal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-title">XÁC NHẬN ĐƠN HÀNG</div>
-            <div id="confirm-list" class="confirm-list"></div>
-            <div id="confirm-total" class="confirm-total">Tổng: 0k</div>
-            <div class="modal-btn-group">
-                <button class="modal-btn btn-cancel" onclick="closeModal('confirm-modal')">Sửa lại</button>
-                <button class="modal-btn btn-confirm" onclick="processPrintAndSave()">✅ IN NGAY</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="stats-modal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-title">DOANH THU</div>
-            <div id="loading">Đang tải dữ liệu...</div>
-            <div id="stats-content" style="display:none;">
-                <div class="tabs-container">
-                    <button class="tab-btn active" id="tab-today" onclick="switchTab('today')">HÔM NAY</button>
-                    <button class="tab-btn" id="tab-month" onclick="switchTab('month')">THÁNG</button>
-                    <button class="tab-btn" id="tab-year" onclick="switchTab('year')">NĂM</button>
-                    <button class="tab-btn" id="tab-custom" onclick="switchTab('custom')">KHÁC</button>
-                </div>
-                <div class="stat-display-area">
-                    <div class="stat-big-value" id="display-value">0k</div>
-                    <div class="stat-label" id="display-label">Doanh thu Hôm nay</div>
-                    <div id="date-picker-area">
-                        <input type="date" id="date-input" class="date-input">
-                        <button class="btn-search-date" onclick="lookupDate()">🔍 Tra cứu</button>
-                    </div>
-                    <div class="stat-count-info">Tổng đơn đã in: <b id="stat-count" style="color:#333">0</b></div>
-                </div>
-            </div>
-            <div class="modal-btn-group">
-                <button class="modal-btn btn-cancel" onclick="closeModal('stats-modal')">Đóng</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="toast">Đã lưu vào Google Sheet!</div>
-    <div id="print-section"></div>
-
-    <script>
-        const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4hKNgQCElUaM7ShRFSka1bjGnNqVPdOTHrGgbz2fmxrro1oroSeiu_QwPetGtGNBC/exec";
-        
-        var menu = [
-            { name: "Chè Bưởi", price: 15000 }, { name: "Chè Đậu Đỏ", price: 15000 }, { name: "Chè Đậu Đen", price: 15000 },
-            { name: "Chè Đậu Xanh", price: 15000 }, { name: "Chè Thập Cẩm", price: 15000 }, { name: "Chè Ngô Cốt Dừa", price: 15000 },
-            { name: "Chè Cốm Dừa Non", price: 15000 }, { name: "Chè Dừa Dầm", price: 15000 }, { name: "Chè Khoai Dẻo", price: 15000 },
-            { name: "Chè Tuổi Thơ", price: 15000 }, { name: "Sương Sa Hạt Lựu", price: 15000 }, { name: "SC Trân Châu", price: 15000 },
-            { name: "Thập Cẩm ĐB", price: 20000 }, { name: "Sữa Chua Mít", price: 20000 }, { name: "SC Dừa Non", price: 20000 },
-            { name: "SC Cốm Dừa Non", price: 20000 }, { name: "Chè Sầu", price: 25000 }, { name: "Sầu Riêng Đ.Xanh", price: 25000 }, 
-            { name: "Chè Hạt Đác", price: 25000 }, { name: "SC Mít Hạt Đác", price: 25000 }, { name: "Chè Thốt Nốt", price: 25000 },
-            { name: "SC Mít Sầu Riêng", price: 35000 }
-        ];
-
-        var cart = []; 
-        var currentStats = { today: 0, month: 0, year: 0, count: 0 };
-        var globalPassword = ""; 
-
-        function formatK(price) { return (price / 1000) + "k"; }
-        
-        // --- CẬP NHẬT RENDER MENU (ACCORDION) ---
-        function renderMenu(items) {
-            var container = document.getElementById('menu-area'); container.innerHTML = ''; 
-            var list15 = items.filter(i => i.price === 15000); 
-            var list20 = items.filter(i => i.price === 20000); 
-            var listHigh = items.filter(i => i.price >= 25000);
-            
-            // Logic: Nếu đang tìm kiếm (số lượng hiển thị < tổng), mở hết. 
-            // Nếu không tìm kiếm (full menu), chỉ mở nhóm đầu tiên (15K).
-            var isSearchMode = (items.length !== menu.length);
-
-            function createSection(list, bgClass, title, defaultOpen) {
-                if(list.length === 0) return;
-                var section = document.createElement('div'); section.className = 'menu-section ' + bgClass;
-                
-                var header = document.createElement('div'); 
-                header.className = 'section-title'; 
-                // Biểu tượng: ▼ nếu mở, ▶ nếu đóng
-                var iconChar = defaultOpen ? '▼' : '▶';
-                var displayStyle = defaultOpen ? 'grid' : 'none';
-                
-                header.innerHTML = `<span>${title}</span><span class="toggle-icon">${iconChar}</span>`;
-                
-                var grid = document.createElement('div'); 
-                grid.className = 'group-grid';
-                grid.style.display = displayStyle; // Set trạng thái ban đầu
-
-                // Thêm sự kiện click để ẩn/hiện
-                header.onclick = function() {
-                    var ic = header.querySelector('.toggle-icon');
-                    if (grid.style.display === 'none') {
-                        grid.style.display = 'grid';
-                        ic.innerText = '▼';
-                    } else {
-                        grid.style.display = 'none';
-                        ic.innerText = '▶';
-                    }
-                };
-
-                list.forEach(item => {
-                    var btn = document.createElement('div'); btn.className = 'btn-che';
-                    btn.innerHTML = `<span class="che-name">${item.name}</span><span class="che-price">${formatK(item.price)}</span>`;
-                    btn.onclick = function() { addToCart(item); }; grid.appendChild(btn);
-                });
-                section.appendChild(header); section.appendChild(grid); container.appendChild(section);
-            }
-            
-            // Gọi hàm tạo section với tham số defaultOpen
-            // Nhóm 15K: Mở nếu là tìm kiếm HOẶC luôn mở mặc định (true)
-            createSection(list15, 'bg-15k', '15K - ĐỒNG GIÁ', true); 
-            // Nhóm 20K & 25K: Chỉ mở khi đang tìm kiếm (isSearchMode)
-            createSection(list20, 'bg-20k', '20K - ĐỒNG GIÁ', isSearchMode); 
-            createSection(listHigh, 'bg-high', '25K+ (CAO CẤP)', isSearchMode);
-        }
-        renderMenu(menu);
-
-        function filterMenu() {
-            var keyword = document.getElementById('search-box').value.toLowerCase();
-            var filtered = menu.filter(item => item.name.toLowerCase().indexOf(keyword) > -1); renderMenu(filtered);
-        }
-        
-        // --- CHỨC NĂNG CUỘN CART ---
-        function scrollCartToBottom() {
-            var el = document.getElementById('cart-list');
-            el.scrollTop = el.scrollHeight;
-        }
-
-        function addToCart(item) {
-            var foundIndex = -1; for(var i=0; i<cart.length; i++) { if(cart[i].name === item.name && cart[i].note === "") { foundIndex = i; break; } }
-            if(foundIndex !== -1) cart[foundIndex].quantity++; else cart.push({ name: item.name, price: item.price, note: "", quantity: 1 });
-            document.getElementById('search-box').value = ''; 
-            renderMenu(menu); 
-            renderCart();
-            // Tự động cuộn xuống món vừa thêm
-            setTimeout(scrollCartToBottom, 100);
-        }
-        
-        window.changeQty = function(index, delta) { cart[index].quantity += delta; if (cart[index].quantity <= 0) removeFromCart(index); else renderCart(); }
-        function removeFromCart(index) { cart.splice(index, 1); renderCart(); }
-        function clearCart() { cart = []; renderCart(); document.getElementById('search-box').value = ''; renderMenu(menu); }
-        window.updateNoteData = function(index, val) { if (cart[index]) cart[index].note = val; }
-        
-        window.toggleNoteView = function(index, checkbox) {
-            var item = cart[index];
-            if (checkbox.checked) {
-                if (item.quantity > 1) {
-                    item.quantity--; var newItem = { name: item.name, price: item.price, note: "", quantity: 1 };
-                    cart.splice(index + 1, 0, newItem); renderCart();
-                    var newIndex = index + 1;
-                    setTimeout(() => {
-                        var inputs = document.querySelectorAll('.option-row input[type="text"]'); 
-                        // Tìm input đúng của item mới
-                        var input = document.getElementById('input-' + newIndex);
-                        if(input) {
-                            input.parentNode.style.display = 'block';
-                            input.focus();
-                            // Hack checkbox hiển thị
-                            var cbs = document.querySelectorAll('input[type="checkbox"]');
-                            if(cbs[newIndex]) cbs[newIndex].checked = true;
-                        }
-                    }, 50); checkbox.checked = false;
-                } else { document.getElementById('note-box-' + index).style.display = 'block'; document.getElementById('input-' + index).focus(); }
-            } else { document.getElementById('note-box-' + index).style.display = 'none'; updateNoteData(index, ""); document.getElementById('input-' + index).value = ""; }
-        }
-
-        function renderCart() {
-            var listDiv = document.getElementById('cart-list'); var countDisplay = document.getElementById('count-display'); var totalDisplay = document.getElementById('total-price');
-            var totalMoney = 0; var totalCups = 0;
-            for(var k=0; k<cart.length; k++) { totalMoney += (cart[k].price * cart[k].quantity); totalCups += cart[k].quantity; }
-            countDisplay.innerText = totalCups; totalDisplay.innerText = formatK(totalMoney);
-            if (cart.length === 0) { listDiv.innerHTML = '<div style="text-align:center; padding: 15px; color:#aaa; font-size:12px; font-style:italic;">Chưa chọn món nào<br>Hãy bấm vào menu ở trên</div>'; return; }
-            var htmlString = '';
-            for (var i = 0; i < cart.length; i++) {
-                var item = cart[i]; var hasNote = (item.note && item.note.trim() !== ""); var checkedStr = hasNote ? "checked" : ""; var displayStr = hasNote ? "block" : "none";
-                htmlString += `<div class="cart-item"><div class="item-row-top"><div class="item-left"><span class="item-qty-badge">x${item.quantity}</span><span class="item-name">${item.name}</span></div>
-                    <div class="item-right"><div class="qty-btn" onclick="changeQty(${i}, -1)">-</div><div class="qty-btn" onclick="changeQty(${i}, 1)">+</div><div class="delete-btn" onclick="removeFromCart(${i})">✕</div></div></div>
-                    <div class="option-row"><label style="display:flex; align-items:center; width:100%; cursor:pointer;"><input type="checkbox" ${checkedStr} onchange="toggleNoteView(${i}, this)" style="margin-right:5px;"> Ghi chú</label></div>
-                    <div id="note-box-${i}" style="display: ${displayStr};"><input type="text" id="input-${i}" class="note-input" placeholder="Nhập ghi chú..." value="${item.note}" oninput="updateNoteData(${i}, this.value)"></div></div>`;
-            } listDiv.innerHTML = htmlString;
-        }
-
-        function showConfirmDialog() {
-            if (cart.length === 0) { alert("Chưa chọn món nào!"); return; }
-            var list = document.getElementById('confirm-list'); var total = document.getElementById('confirm-total');
-            var html = ''; var finalTotal = 0;
-            cart.forEach(item => {
-                var subTotal = item.price * item.quantity; finalTotal += subTotal;
-                var noteText = (item.note) ? `<br><small style="color:red; font-style:italic;">(${item.note})</small>` : '';
-                html += `<div class="confirm-row"><div style="flex:1;"><b>x${item.quantity}</b> ${item.name} ${noteText}</div><div style="font-weight:bold;">${formatK(subTotal)}</div></div>`;
-            });
-            list.innerHTML = html; total.innerText = "Tổng: " + formatK(finalTotal);
-            document.getElementById('confirm-modal').style.display = 'flex';
-        }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-        // --- GỬI DỮ LIỆU ---
-        function sendToGoogleSheet(totalMoney) {
-            var orderDetails = cart.map(item => `(${item.quantity}) ${item.name} ${item.note ? '['+item.note+']' : ''}`).join(", ");
-            var data = { action: 'save', order_details: orderDetails, total_money: totalMoney };
-            fetch(GOOGLE_APPS_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
-            .then(() => { var x = document.getElementById("toast"); x.className = "show"; setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000); })
-            .catch(err => console.error(err));
-        }
-
-        // --- XỬ LÝ IN & LƯU & XÓA ĐƠN ---
-        function processPrintAndSave() {
-            var totalMoney = 0; 
-            cart.forEach(i => totalMoney += (i.price * i.quantity));
-            closeModal('confirm-modal');
-            var printSection = document.getElementById('print-section'); 
-            printSection.innerHTML = ''; 
-            var printHTML = '';
-            cart.forEach(item => {
-                var notePart = (item.note && item.note.trim() !== "") ? `<span class="sticker-custom-note">${item.note}</span>` : '';
-                for (var q = 0; q < item.quantity; q++) { printHTML += `<div class="sticker"><span class="sticker-name">${item.name}</span>${notePart}</div>`; }
-            });
-            printSection.innerHTML = printHTML; 
-            
-            setTimeout(() => { 
-                window.print(); 
-                setTimeout(() => {
-                    var isPrinted = confirm("🖨️ XÁC NHẬN:\n\nBạn đã in phiếu thành công chưa?\n\n- Bấm [OK] để LƯU DOANH THU & XÓA ĐƠN.\n- Bấm [Cancel] nếu bạn hủy in.");
-                    if(isPrinted) {
-                        sendToGoogleSheet(totalMoney); 
-                        clearCart(); 
-                    }
-                }, 1000); 
-            }, 500);
-        }
-
-        // --- THỐNG KÊ ---
-        function askPassword() {
-            var pass = prompt("🔒 Nhập mật khẩu quản lý:", "");
-            if (pass) {
-                globalPassword = pass; 
-                document.getElementById('stats-modal').style.display = 'flex';
-                document.getElementById('loading').style.display = 'block';
-                document.getElementById('stats-content').style.display = 'none';
-                
-                var data = { action: 'get_stats', password: pass };
-                
-                fetch(GOOGLE_APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(data)
-                })
-                .then(response => response.json())
-                .then(result => {
-                    document.getElementById('loading').style.display = 'none';
-                    if (result.result === "success") {
-                        currentStats = result;
-                        document.getElementById('stats-content').style.display = 'block';
-                        document.getElementById('stat-count').innerText = result.count + " đơn";
-                        switchTab('today');
-                    } else {
-                        alert("⛔ " + result.msg);
-                        closeModal('stats-modal');
-                    }
-                })
-                .catch(error => {
-                    document.getElementById('loading').style.display = 'none';
-                    alert("Lỗi: " + error);
-                    closeModal('stats-modal');
-                });
-            }
-        }
-
-        function lookupDate() {
-            var dateVal = document.getElementById('date-input').value;
-            if(!dateVal) { alert("Vui lòng chọn ngày!"); return; }
-            document.getElementById('display-value').innerText = "...";
-            document.getElementById('display-label').innerText = "Đang tra cứu...";
-            var data = { action: 'check_date', password: globalPassword, target_date: dateVal };
-
-            fetch(GOOGLE_APPS_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.result === "success") {
-                    document.getElementById('display-value').innerText = formatK(result.total);
-                    var parts = dateVal.split("-");
-                    var niceDate = parts[2] + "/" + parts[1] + "/" + parts[0];
-                    document.getElementById('display-label').innerText = "Doanh thu ngày " + niceDate;
-                } else {
-                    alert("Lỗi: " + result.msg);
-                }
-            });
-        }
-
-        function switchTab(type) {
-            document.getElementById('tab-today').classList.remove('active');
-            document.getElementById('tab-month').classList.remove('active');
-            document.getElementById('tab-year').classList.remove('active');
-            document.getElementById('tab-custom').classList.remove('active');
-            document.getElementById('tab-' + type).classList.add('active');
-
-            var displayValue = document.getElementById('display-value');
-            var displayLabel = document.getElementById('display-label');
-            var datePicker = document.getElementById('date-picker-area');
-
-            if (type === 'custom') {
-                datePicker.style.display = 'flex';
-                displayValue.innerText = "---";
-                displayLabel.innerText = "Chọn ngày để xem";
-                displayValue.style.color = "#ff9800";
-                return; 
-            } else {
-                datePicker.style.display = 'none';
-            }
-
-            if (type === 'today') {
-                displayValue.innerText = formatK(currentStats.today);
-                displayLabel.innerText = "Doanh thu Hôm nay";
-                displayValue.style.color = "#1565c0"; 
-            } else if (type === 'month') {
-                displayValue.innerText = formatK(currentStats.month);
-                displayLabel.innerText = "Doanh thu Tháng này";
-                displayValue.style.color = "#2e7d32"; 
-            } else if (type === 'year') {
-                displayValue.innerText = formatK(currentStats.year);
-                displayLabel.innerText = "Doanh thu Năm nay";
-                displayValue.style.color = "#c62828"; 
-            }
-        }
-    </script>
+    <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>

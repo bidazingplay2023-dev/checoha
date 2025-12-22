@@ -119,6 +119,43 @@ const App = () => {
         });
     };
 
+    // Hàm mới: Xử lý nhập số trực tiếp vào input
+    const handleDirectQtyChange = (index: number, valStr: string) => {
+        // Cho phép nhập rỗng (để user xóa số cũ)
+        if (valStr === "") {
+            setCart(prev => {
+                const newCart = [...prev];
+                // Tạm thời gán bằng 0 hoặc giữ nguyên hiển thị rỗng bằng cách ép kiểu (cần cẩn thận logic render)
+                // Ở đây ta cứ set tạm, onBlur sẽ xử lý
+                // @ts-ignore
+                newCart[index].quantity = ""; 
+                return newCart;
+            });
+            return;
+        }
+
+        const num = parseInt(valStr);
+        if (!isNaN(num)) {
+            setCart(prev => {
+                const newCart = [...prev];
+                newCart[index].quantity = num;
+                return newCart;
+            });
+        }
+    };
+
+    // Hàm mới: Xử lý khi input số bị mất focus (onBlur)
+    const handleQtyBlur = (index: number) => {
+        setCart(prev => {
+            const newCart = [...prev];
+            // Nếu để trống hoặc <= 0 mà không phải do bấm nút xóa, ta reset về 1
+            if (!newCart[index].quantity || newCart[index].quantity < 1) {
+                newCart[index].quantity = 1;
+            }
+            return newCart;
+        });
+    };
+
     const removeLine = (index: number) => {
         setCart(prev => prev.filter((_, i) => i !== index));
     };
@@ -218,7 +255,7 @@ const App = () => {
 
     const processPrintAndSave = () => {
         let totalMoney = 0;
-        cart.forEach(i => totalMoney += (i.price * i.quantity));
+        cart.forEach(i => totalMoney += (i.price * (Number(i.quantity) || 0)));
         setShowConfirmModal(false);
 
         // Inject into DOM for printing
@@ -233,7 +270,8 @@ const App = () => {
                 const notePart = (item.note && item.note.trim() !== "") 
                     ? `<span class="sticker-custom-note">${item.note}</span>` 
                     : '';
-                for (let q = 0; q < item.quantity; q++) {
+                const qty = Number(item.quantity) || 0;
+                for (let q = 0; q < qty; q++) {
                     printHTML += `<div class="sticker"><span class="sticker-name">${item.name}</span>${notePart}</div>`;
                 }
             });
@@ -365,8 +403,8 @@ const App = () => {
         );
     };
 
-    const cartTotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-    const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+    const cartTotal = cart.reduce((acc, item) => acc + (item.price * (Number(item.quantity) || 0)), 0);
+    const cartCount = cart.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0);
 
     return (
         <React.Fragment>
@@ -422,12 +460,22 @@ const App = () => {
                                             <div className="cart-item" key={i}>
                                                 <div className="item-row-top">
                                                     <div className="item-left">
-                                                        <span className="item-qty-badge">x{item.quantity}</span>
                                                         <span className="item-name">{item.name}</span>
+                                                        <span className="item-price-single">{formatK(item.price)}</span>
                                                     </div>
                                                     <div className="item-right">
-                                                        <div className="qty-btn" onClick={() => changeQty(i, -1)}>-</div>
-                                                        <div className="qty-btn" onClick={() => changeQty(i, 1)}>+</div>
+                                                        {/* COMPACT QTY GROUP */}
+                                                        <div className="qty-group">
+                                                            <div className="qty-btn" onClick={() => changeQty(i, -1)}>-</div>
+                                                            <input 
+                                                                type="number"
+                                                                className="qty-input"
+                                                                value={item.quantity}
+                                                                onChange={(e) => handleDirectQtyChange(i, e.target.value)}
+                                                                onBlur={() => handleQtyBlur(i)}
+                                                            />
+                                                            <div className="qty-btn" onClick={() => changeQty(i, 1)}>+</div>
+                                                        </div>
                                                         <div className="delete-btn" onClick={() => removeLine(i)}>✕</div>
                                                     </div>
                                                 </div>
@@ -473,7 +521,6 @@ const App = () => {
                             <div className="action-row" style={{ marginTop: '6px' }}>
                                 <button id="btn-clear" className="action-btn" onClick={clearCart}>🗑️ Xóa mới</button>
                             </div>
-                            <div className="security-note">Dữ liệu được bảo mật bởi Google</div>
                         </div>
                     </div>
                 </div>
@@ -490,7 +537,7 @@ const App = () => {
                                             <b>x{item.quantity}</b> {item.name} 
                                             {item.note && <><br /><small style={{ color: 'red', fontStyle: 'italic' }}>({item.note})</small></>}
                                         </div>
-                                        <div style={{ fontWeight: 'bold' }}>{formatK(item.price * item.quantity)}</div>
+                                        <div style={{ fontWeight: 'bold' }}>{formatK(item.price * (Number(item.quantity) || 0))}</div>
                                     </div>
                                 ))}
                             </div>

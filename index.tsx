@@ -259,21 +259,23 @@ const App = () => {
     const processPrintAndSave = () => {
         let totalMoney = 0;
         cart.forEach(i => totalMoney += (i.price * (Number(i.quantity) || 0)));
+        // Đóng modal UI
         setShowConfirmModal(false);
 
         const printSection = document.getElementById('print-section');
         if (printSection) {
-            // 1. Tạo CSS động cho khổ giấy
-            let dynamicStyle = document.getElementById('dynamic-print-style');
-            if (!dynamicStyle) {
-                dynamicStyle = document.createElement('style');
-                dynamicStyle.id = 'dynamic-print-style';
-                document.head.appendChild(dynamicStyle);
-            }
+            // --- BƯỚC 1: Xóa Style cũ để đảm bảo cập nhật mới nhất ---
+            const oldStyle = document.getElementById('dynamic-print-style');
+            if (oldStyle) oldStyle.remove();
 
-            // --- SỬA LỖI 1: TREO KHI CHỌN KHỔ GIẤY ---
-            // Không áp đặt width/height cố định cho html, body để tránh conflict với trình điều khiển in.
-            // Chỉ định nghĩa kích thước cho .sticker
+            // --- BƯỚC 2: Tạo CSS mới (SỬA LỖI TREO VÀ LỖI 1 TRANG) ---
+            const dynamicStyle = document.createElement('style');
+            dynamicStyle.id = 'dynamic-print-style';
+            
+            // QUAN TRỌNG: 
+            // 1. @page size: Thiết lập kích thước giấy cho trình duyệt.
+            // 2. html, body: Phải reset height: auto và overflow: visible. Nếu để height: 100% (mặc định app) thì khi in 100 món sẽ bị cắt còn 1 trang.
+            // 3. .sticker: break-after: page để ngắt trang.
             dynamicStyle.innerHTML = `
                 @media print {
                     @page {
@@ -284,23 +286,35 @@ const App = () => {
                         margin: 0 !important;
                         padding: 0 !important;
                         background: #fff !important;
-                        /* Quan trọng: Để auto để trình duyệt tự resize theo khổ giấy chọn */
-                        width: auto !important; 
+                        width: 100% !important;
+                        height: auto !important; /* SỬA LỖI CHỈ IN 1 TRANG */
+                        overflow: visible !important; /* SỬA LỖI CHỈ IN 1 TRANG */
+                        display: block !important;
+                    }
+                    /* Ẩn giao diện App */
+                    #ui-container { display: none !important; }
+                    
+                    /* Hiển thị vùng in */
+                    #print-section {
+                        display: block !important;
+                        width: ${printConfig.width}mm;
                         height: auto !important;
                         overflow: visible !important;
+                        position: absolute;
+                        top: 0;
+                        left: 0;
                     }
+
                     .sticker {
                         width: ${printConfig.width}mm;
                         height: ${printConfig.height}mm;
-                        /* Ngắt trang bắt buộc sau mỗi tem */
-                        page-break-after: always;
-                        break-after: page;
-                        /* Flex center nội dung tem */
+                        page-break-after: always; /* Cũ */
+                        break-after: page; /* Mới */
                         display: flex;
                         flex-direction: column;
                         justify-content: center;
                         align-items: center;
-                        overflow: hidden;
+                        overflow: hidden; /* Tránh tràn gây thêm trang trắng */
                         padding: 1mm;
                         box-sizing: border-box;
                     }
@@ -328,8 +342,9 @@ const App = () => {
                     }
                 }
             `;
+            document.head.appendChild(dynamicStyle);
 
-            // 2. Render nội dung
+            // --- BƯỚC 3: Tạo nội dung HTML (ĐỒNG BỘ) ---
             printSection.innerHTML = '';
             let printHTML = '';
             cart.forEach(item => {
@@ -344,29 +359,31 @@ const App = () => {
                     </div>`;
                 }
             });
-
             printSection.innerHTML = printHTML;
-            
-            // 3. Gọi lệnh in
-            // --- SỬA LỖI 2: IOS CHẶN POPUP ---
-            // Sử dụng requestAnimationFrame thay vì setTimeout để đảm bảo lệnh in được gọi
-            // ngay sau khi trình duyệt render xong frame tiếp theo, giữ nguyên ngữ cảnh "User Gesture".
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    window.print();
-                    
-                    // Xử lý sau khi in (vẫn giữ logic cũ)
-                    setTimeout(() => {
-                        const isPrinted = window.confirm("🖨️ XÁC NHẬN:\n\nBạn đã in phiếu thành công chưa?\n\n- Bấm [OK] để LƯU DOANH THU & XÓA ĐƠN.\n- Bấm [Cancel] nếu bạn hủy in.");
-                        
-                        if (isPrinted) {
-                            sendToGoogleSheet(totalMoney);
-                            clearCart();
-                        }
-                        if (printSection) printSection.innerHTML = ''; 
-                    }, 500);
-                });
-            });
+
+            // --- BƯỚC 4: GỌI IN NGAY LẬP TỨC (SỬA LỖI IPHONE CHẶN) ---
+            // Không dùng setTimeout hay requestAnimationFrame ở đây.
+            // Việc gọi window.print() ngay trong stack sự kiện click sẽ được iOS coi là hợp lệ (User Gesture).
+            try {
+                window.print();
+            } catch (e) {
+                console.error("Print error:", e);
+                alert("Lỗi khi gọi máy in. Vui lòng thử lại.");
+            }
+
+            // --- BƯỚC 5: XỬ LÝ SAU KHI IN ---
+            // Chỉ dùng timeout cho popup xác nhận SAU khi lệnh in đã được gửi đi.
+            // Điều này không ảnh hưởng đến việc mở dialog in.
+            setTimeout(() => {
+                const isPrinted = window.confirm("🖨️ XÁC NHẬN:\n\nBạn đã in phiếu thành công chưa?\n\n- Bấm [OK] để LƯU DOANH THU & XÓA ĐƠN.\n- Bấm [Cancel] nếu bạn hủy in.");
+                
+                if (isPrinted) {
+                    sendToGoogleSheet(totalMoney);
+                    clearCart();
+                }
+                // Dọn dẹp DOM in
+                if (printSection) printSection.innerHTML = ''; 
+            }, 500);
         }
     };
 

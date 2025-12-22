@@ -3,370 +3,329 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chè Cô Hà (Mobile Opt)</title>
+    <title>Chè Cô Hà (Modern UI)</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         /* --- RESET & GLOBAL VARS --- */
         :root {
-            --primary-color: #2563eb;
+            /* Modern Palette */
+            --primary-color: #3b82f6; 
+            --primary-dark: #2563eb;
             --bg-body: #f1f5f9;
             --surface-color: #ffffff;
-            --text-main: #0f172a;
+            --text-main: #1e293b;
             --text-sub: #64748b;
-            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --danger-color: #ef4444;
+            --danger-bg: #fee2e2;
+            
+            /* Spacing & Radius */
+            --radius-lg: 16px;
             --radius-md: 12px;
             --radius-sm: 8px;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-float: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        /* KHÓA BODY TRIỆT ĐỂ */
         html, body { 
-            width: 100%;
-            height: 100%;
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden; /* Cấm cuộn body */
+            width: 100%; height: 100%; margin: 0; padding: 0; 
+            overflow: hidden; 
             font-family: 'Roboto', sans-serif; 
             background-color: var(--bg-body); 
             color: var(--text-main);
             font-size: 14px; 
-            overscroll-behavior: none; /* Chặn hiệu ứng nảy cao su toàn trang */
+            overscroll-behavior: none;
         }
 
-        /* --- LAYOUT CONTAINER (FIXED BOX) --- */
-        /* Thay vì dùng height:100%, ta neo chặt 4 góc màn hình */
+        /* --- LAYOUT CONTAINER --- */
         #ui-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            flex-direction: column;
-            background: #f8fafc;
+            position: fixed; inset: 0;
+            display: flex; flex-direction: column;
+            background: var(--bg-body);
             z-index: 1;
         }
 
         /* --- 1. TOP BAR --- */
         #top-bar {
-            flex: 0 0 auto; /* Không co giãn */
-            height: 56px;
-            padding: 0 12px;
+            flex: 0 0 auto;
+            height: 64px;
+            padding: 0 16px;
             background: var(--surface-color);
             z-index: 10;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            display: flex; align-items: center; gap: 12px;
             box-shadow: var(--shadow-sm);
             border-bottom: 1px solid #e2e8f0;
         }
 
         #search-box { 
             flex: 1;
-            padding: 0 16px; 
-            border: 1px solid #e2e8f0; 
+            padding: 0 20px; 
+            border: 1px solid #cbd5e1; 
             border-radius: 99px; 
-            font-size: 14px; 
+            font-size: 15px; 
             outline: none; 
-            background: #f1f5f9;
+            background: #f8fafc;
             color: var(--text-main);
-            height: 36px;
+            height: 44px;
+            transition: all 0.2s;
         }
-        #search-box:focus { background: #fff; border-color: var(--primary-color); }
+        #search-box:focus { 
+            background: #fff; 
+            border-color: var(--primary-color); 
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
         
         .btn-stats-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            border: none;
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
-            color: white;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            flex-shrink: 0;
+            width: 44px; height: 44px;
+            border-radius: 14px; border: none;
+            background: #eff6ff;
+            color: var(--primary-dark);
+            font-size: 20px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; flex-shrink: 0;
+            transition: transform 0.1s;
         }
+        .btn-stats-icon:active { transform: scale(0.92); }
 
         /* --- 2. MAIN AREA --- */
         #main-split-view {
-            flex: 1; /* Chiếm toàn bộ không gian còn lại */
-            display: flex;
-            flex-direction: column; 
-            overflow: hidden; /* Cắt bỏ phần thừa */
-            position: relative;
+            flex: 1; display: flex; flex-direction: column; 
+            overflow: hidden; position: relative;
         }
 
-        /* --- LEFT PANEL (MENU LIST) --- */
+        /* --- LEFT PANEL (MENU) --- */
         #left-panel {
-            flex: 1; /* Lấp đầy không gian trống */
-            overflow-y: auto; /* Cho phép cuộn dọc */
-            -webkit-overflow-scrolling: touch; /* Cuộn mượt iOS */
-            padding: 10px;
-            /* Padding dưới cùng để nội dung cuối không bị che bởi Giỏ hàng khi nó trồi lên */
-            padding-bottom: 20px; 
+            flex: 1; 
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch; 
+            padding: 16px; 
+            padding-bottom: 24px;
         }
 
-        /* Menu Styles */
-        .menu-section { margin-bottom: 12px; border-radius: var(--radius-md); }
+        .menu-section { margin-bottom: 20px; }
+        
         .section-title { 
-            font-weight: 700; font-size: 13px; text-transform: uppercase; 
-            margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; 
-            padding: 8px 12px; cursor: pointer; user-select: none; border-radius: 8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; 
+            padding-left: 4px; color: var(--text-sub);
         }
-        .bg-15k .section-title { background: linear-gradient(to right, #fffbeb, #fff7ed); color: #b45309; border-left: 4px solid #f59e0b; }
-        .bg-20k .section-title { background: linear-gradient(to right, #eff6ff, #f0f9ff); color: #0369a1; border-left: 4px solid #0ea5e9; }
-        .bg-high .section-title { background: linear-gradient(to right, #fef2f2, #fff1f2); color: #be123c; border-left: 4px solid #f43f5e; }
-        .toggle-icon { font-size: 10px; background: rgba(255,255,255,0.6); width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
-
-        .group-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        
+        /* GRID MENU CARD */
+        .group-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        
         .btn-che { 
-            width: 100%; min-height: 60px; padding: 8px; 
-            background-color: var(--surface-color); color: var(--text-main); 
-            border: 1px solid rgba(0,0,0,0.05); border-radius: 10px; 
+            width: 100%; min-height: 80px; padding: 12px; 
+            background-color: var(--surface-color); 
+            border: 1px solid transparent; 
+            border-radius: var(--radius-lg); 
             cursor: pointer; display: flex; flex-direction: column; 
             align-items: flex-start; justify-content: space-between; text-align: left; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03); 
+            box-shadow: var(--shadow-sm);
+            transition: all 0.1s ease;
+            position: relative; overflow: hidden;
         }
-        .bg-15k .btn-che { border-bottom: 2px solid #fcd34d; }
-        .bg-20k .btn-che { border-bottom: 2px solid #7dd3fc; }
-        .bg-high .btn-che { border-bottom: 2px solid #fca5a5; }
-        .che-name { font-size: 12px; font-weight: 600; line-height: 1.3; margin-bottom: 2px; color: #334155; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .che-price { font-size: 10px; color: #64748b; font-weight: 500; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; }
+        
+        /* Active State Animation */
+        .btn-che:active { 
+            transform: scale(0.96); 
+            background-color: #f8fafc;
+        }
+
+        /* Border Color Coding */
+        .bg-15k .btn-che { border-left: 4px solid #f59e0b; }
+        .bg-20k .btn-che { border-left: 4px solid #0ea5e9; }
+        .bg-high .btn-che { border-left: 4px solid #f43f5e; }
+
+        .che-name { 
+            font-size: 14px; font-weight: 600; line-height: 1.4; 
+            color: var(--text-main); margin-bottom: 4px;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .che-price { 
+            font-size: 12px; font-weight: 700; 
+            color: var(--text-sub); 
+            background: #f1f5f9; padding: 4px 8px; border-radius: 6px; 
+        }
 
         /* --- RIGHT PANEL (CART) --- */
         #right-panel {
-            flex: 0 0 auto; /* Không tự giãn, chiều cao phụ thuộc nội dung hoặc max-height */
-            max-height: 60%; /* Tăng nhẹ để có thêm không gian */
+            flex: 0 0 auto; 
+            max-height: 60%;
             background: var(--surface-color);
-            border-top-left-radius: 16px;
-            border-top-right-radius: 16px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 -4px 25px rgba(0,0,0,0.15);
-            z-index: 20;
-            overflow: hidden; /* Quan trọng: để bo tròn góc không bị chém */
-            border-top: 1px solid #e2e8f0;
+            border-top-left-radius: 24px; border-top-right-radius: 24px;
+            display: flex; flex-direction: column;
+            box-shadow: var(--shadow-float);
+            z-index: 20; border-top: 1px solid #e2e8f0;
         }
 
         #cart-container { 
-            display: flex; 
-            flex-direction: column; 
-            flex: 1; /* Chiếm hết chiều cao của right-panel */
-            background: white;
-            overflow: hidden; /* Chặn tràn container */
-            min-height: 0; /* Fix lỗi Flexbox trên Firefox/Safari cũ */
+            display: flex; flex-direction: column; flex: 1; 
+            background: white; overflow: hidden; min-height: 0;
         }
         
         #cart-header { 
-            flex: 0 0 auto;
-            padding: 8px 12px; 
-            background: #fff;
-            border-bottom: 1px solid #f1f5f9; 
-            font-size: 13px; font-weight: 700; 
+            flex: 0 0 auto; padding: 14px 20px; 
+            background: #fff; border-bottom: 1px solid #f1f5f9; 
+            font-size: 15px; font-weight: 700; color: var(--text-main);
             display: flex; justify-content: space-between; align-items: center; 
         }
-        #count-display { background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 6px; font-size: 12px; margin-left: 6px; }
+        #count-display { 
+            background: #eff6ff; color: #1d4ed8; 
+            padding: 4px 10px; border-radius: 99px; 
+            font-size: 13px; font-weight: 800;
+        }
 
-        /* VÙNG CUỘN DANH SÁCH GIỎ HÀNG */
         #cart-list { 
-            flex: 1 1 auto; /* Co giãn linh hoạt */
-            overflow-y: auto; /* BẮT BUỘC: Cho phép cuộn */
+            flex: 1 1 auto; overflow-y: auto; 
             -webkit-overflow-scrolling: touch; 
-            padding: 0 12px;
-            min-height: 0; /* Fix lỗi không cuộn được */
+            padding: 0 20px; min-height: 0;
         }
 
-        /* -- OPTIMIZED COMPACT CART ITEM -- */
-        .cart-item { 
-            padding: 8px 0; /* Giảm padding */
-            border-bottom: 1px solid #f1f5f9; 
-        }
-
+        .cart-item { padding: 16px 0; border-bottom: 1px solid #f1f5f9; }
+        
         .item-row-top { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: flex-start; /* Căn trên để xử lý tên dài */
-            gap: 8px;
+            display: flex; justify-content: space-between; align-items: center; 
+            gap: 12px;
         }
 
         .item-left { 
-            display: flex; 
-            flex-direction: column; /* Đổi thành dọc để tiết kiệm ngang */
-            width: 50%;
-            justify-content: center;
+            flex: 1; display: flex; flex-direction: column; justify-content: center;
         }
-        
-        .item-name { 
-            font-weight: 600; 
-            font-size: 13px; 
-            color: #334155; 
-            line-height: 1.3;
-        }
-        
-        .item-price-single {
-             font-size: 11px;
-             color: #94a3b8;
-             margin-top: 2px;
-        }
+        .item-name { font-weight: 700; font-size: 14px; color: #334155; }
+        .item-price-single { font-size: 12px; color: #94a3b8; margin-top: 2px; }
 
         .item-right { 
-            display: flex; 
-            align-items: center; 
-            gap: 6px; 
-            width: 50%;
-            justify-content: flex-end;
+            display: flex; align-items: center; 
+            gap: 12px; /* GAP QUAN TRỌNG: Tách nút xóa ra xa */
         }
         
-        /* NEW QUANTITY INPUT GROUP */
+        /* QUANTITY CONTROLS (Pill Shape) */
         .qty-group {
-            display: flex;
-            align-items: center;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
+            display: flex; align-items: center;
             background: #fff;
-            height: 32px; /* Chiều cao cố định */
-            overflow: hidden;
+            border-radius: 10px;
+            height: 40px;
+            padding: 2px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
         }
 
         .qty-btn { 
-            width: 28px; 
-            height: 100%;
-            border: none;
-            background: transparent; 
-            color: #475569; 
-            font-weight: bold; 
-            font-size: 16px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            cursor: pointer; 
+            width: 36px; height: 100%;
+            border: none; background: transparent; 
+            color: var(--primary-color); 
+            font-weight: bold; font-size: 18px; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; border-radius: 8px;
+            transition: all 0.1s;
         }
-        .qty-btn:active { background: #f1f5f9; }
+        .qty-btn:active { background-color: #f1f5f9; transform: scale(0.9); }
 
         .qty-input {
-            width: 32px;
-            height: 100%;
-            border: none;
-            border-left: 1px solid #f1f5f9;
-            border-right: 1px solid #f1f5f9;
-            text-align: center;
-            font-size: 13px;
-            font-weight: 600;
-            color: #0f172a;
-            padding: 0;
-            border-radius: 0;
-            outline: none;
+            width: 32px; height: 100%; border: none;
             background: transparent;
-            -moz-appearance: textfield; /* Firefox remove arrows */
+            text-align: center; font-size: 14px; font-weight: 700; color: #0f172a;
+            outline: none; -moz-appearance: textfield; padding: 0;
         }
-        /* Remove spinner arrows chrome/safari */
-        .qty-input::-webkit-outer-spin-button,
-        .qty-input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
+        .qty-input::-webkit-outer-spin-button, .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
+        /* DELETE BUTTON - DANGER ZONE */
         .delete-btn { 
-            color: #ef4444; 
-            background: #fef2f2; 
-            width: 32px; 
-            height: 32px; 
-            border-radius: 8px; 
-            text-align: center; 
-            line-height: 32px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            font-size: 14px; 
-            flex-shrink: 0;
+            color: var(--danger-color); 
+            background: var(--danger-bg); 
+            width: 40px; height: 40px; border-radius: 10px; 
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 16px; font-weight: bold;
+            transition: transform 0.1s;
+            /* Đảm bảo không bấm nhầm */
+            border: 1px solid transparent;
         }
+        .delete-btn:active { transform: scale(0.9); border-color: #fca5a5; }
         
-        .option-row { margin-top: 4px; display: flex; align-items: center; }
-        .option-row label { font-size: 11px; font-weight: 500; color: #64748b; display: flex; align-items: center; background: #f8fafc; padding: 2px 6px; border-radius: 4px; }
-        .note-input { width: 100%; padding: 6px 8px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
+        .option-row { margin-top: 8px; }
+        .label-note { 
+            font-size: 12px; font-weight: 500; color: #64748b; 
+            display: flex; align-items: center; cursor: pointer; user-select: none;
+        }
+        .note-input { 
+            width: 100%; padding: 8px 12px; margin-top: 6px; 
+            border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; 
+            transition: border 0.2s;
+        }
+        .note-input:focus { border-color: var(--primary-color); outline: none; }
 
-        /* --- BOTTOM CONTROLS (TOTAL & BUTTONS) --- */
+        /* --- BOTTOM CONTROLS --- */
         #bottom-controls {
-            flex: 0 0 auto;
-            padding: 10px 12px;
-            background: white;
-            border-top: 1px solid #f1f5f9;
-            /* Hỗ trợ iPhone X+ */
-            padding-bottom: max(10px, env(safe-area-inset-bottom));
+            flex: 0 0 auto; padding: 20px;
+            background: white; border-top: 1px solid #f1f5f9;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
         }
 
-        #total-bar { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px; }
-        #total-price { font-size: 18px !important; color: #0f172a; font-weight: 800; line-height: 1; }
-        .action-row { display: flex; gap: 8px; margin-bottom: 0; }
-        .action-btn { flex: 1; padding: 10px; font-size: 13px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; text-transform: uppercase; }
-        #btn-print { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; flex: 2; }
-        #btn-clear { background: #f1f5f9; color: #64748b; flex: 1; }
+        #total-bar { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+        #total-price { font-size: 24px !important; color: var(--text-main); font-weight: 900; line-height: 1; }
         
-        /* --- RESPONSIVE: PC / TABLET --- */
+        .action-row { display: flex; gap: 12px; }
+        .action-btn { 
+            flex: 1; padding: 16px; font-size: 14px; border: none; 
+            border-radius: 14px; cursor: pointer; font-weight: 700; 
+            text-transform: uppercase; letter-spacing: 0.5px;
+            transition: transform 0.1s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .action-btn:active { transform: scale(0.98); }
+        
+        #btn-print { 
+            background: linear-gradient(135deg, #3b82f6, #2563eb); 
+            color: white; flex: 2; 
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+        #btn-clear { background: #f1f5f9; color: #64748b; flex: 1; }
+
+        /* RESPONSIVE TABLET/PC */
         @media (min-width: 768px) {
-            #main-split-view {
-                flex-direction: row; 
-                max-width: 1200px;
-                margin: 0 auto;
-                width: 100%;
-                padding: 20px;
-                gap: 20px;
-            }
-
-            #top-bar { padding: 16px; justify-content: center; }
-            #search-box { max-width: 500px; padding: 12px 20px; font-size: 15px; height: 44px; }
-            .btn-stats-icon { width: 44px; height: 44px; }
-
-            #left-panel { flex: 7; border-radius: 16px; padding-right: 16px; height: 100%; }
-            #right-panel { flex: 4; height: 100%; max-height: 100%; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 400px; }
-            
-            #cart-container { flex: 1; max-height: none; }
-            #cart-list { max-height: none; padding: 0 16px; }
-            
-            .group-grid { grid-template-columns: repeat(4, 1fr); gap: 12px; }
-            .btn-che { min-height: 80px; padding: 12px; }
-            .che-name { font-size: 14px; }
+            #main-split-view { max-width: 1200px; margin: 0 auto; padding: 30px; gap: 30px; }
+            #left-panel { border-radius: 24px; box-shadow: var(--shadow-sm); background: white; padding: 24px;}
+            #right-panel { border-radius: 24px; box-shadow: var(--shadow-float); border: none; max-height: 100%;}
+            .group-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+            .btn-che { min-height: 100px; padding: 16px; }
+            .che-name { font-size: 15px; }
         }
 
-        /* --- MODALS & UTILS --- */
+        /* MODALS */
         .modal-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(15, 23, 42, 0.6); z-index: 999; 
+            background: rgba(15, 23, 42, 0.4); z-index: 999; 
             display: flex; align-items: center; justify-content: center; 
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(8px);
         }
         .modal-box { 
-            background: white; width: 90%; max-width: 360px; 
-            border-radius: 16px; padding: 20px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
-            text-align: left; max-height: 85vh; display: flex; flex-direction: column; 
+            background: white; width: 90%; max-width: 400px; 
+            border-radius: 24px; padding: 24px; 
+            box-shadow: var(--shadow-float); 
+            display: flex; flex-direction: column;
         }
-        .modal-title { font-size: 16px; font-weight: 800; margin-bottom: 16px; text-align: center; color: #0f172a; }
-        .confirm-list { overflow-y: auto; margin-bottom: 16px; flex-grow: 1; border: 1px solid #f1f5f9; border-radius: 12px; padding: 12px; background: #f8fafc; font-size: 13px; -webkit-overflow-scrolling: touch; }
-        .confirm-row { border-bottom: 1px dashed #cbd5e1; padding-bottom: 8px; margin-bottom: 8px; }
-        .confirm-total { font-size: 18px; font-weight: 800; color: var(--primary-color); text-align: right; margin-bottom: 16px; }
-        .modal-btn-group { display: flex; gap: 12px; margin-top: auto;}
-        .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 14px; }
-        .btn-confirm { background: #10b981; color: white; }
-        .btn-cancel { background: #f1f5f9; color: #64748b; }
+        .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; text-align: center; color: var(--text-main); }
         
-        /* Stats Tabs */
-        .tabs-container { display: flex; background: #f1f5f9; padding: 4px; border-radius: 10px; margin-bottom: 16px; }
-        .tab-btn { flex: 1; padding: 8px 0; border: none; background: transparent; font-size: 12px; font-weight: 600; color: #64748b; border-radius: 8px; }
-        .tab-btn.active { background: white; color: var(--primary-color); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .stat-display-area { text-align: center; padding: 8px 0 16px 0; }
-        .stat-big-value { font-size: 32px; font-weight: 900; color: var(--primary-color) !important; margin-bottom: 8px; }
+        .confirm-list { border: 1px solid #f1f5f9; border-radius: 12px; padding: 16px; background: #f8fafc; }
+        .btn-confirm { background: #10b981; color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
         
-        #toast { visibility: hidden; min-width: 200px; margin-left: -100px; background-color: #0f172a; color: #fff; text-align: center; border-radius: 99px; padding: 10px 20px; position: fixed; z-index: 1000; left: 50%; bottom: 80px; font-size: 13px; font-weight: 600; }
-        #toast.show { visibility: visible; -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-        
+        #toast { 
+            visibility: hidden; min-width: 200px; 
+            background-color: #1e293b; color: #fff; 
+            text-align: center; border-radius: 99px; padding: 12px 24px; 
+            position: fixed; z-index: 1000; left: 50%; transform: translateX(-50%); bottom: 100px; 
+            font-size: 14px; font-weight: 600; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+
         @media print {
             @page { margin: 0; } 
             html, body { height: auto !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; background: white !important; }
-            #ui-container, .modal-overlay, #toast, .security-note { display: none !important; }
+            #ui-container, .modal-overlay, #toast { display: none !important; }
             #print-section { display: block !important; position: absolute; top: 0; left: 0; width: 100%; background-color: white; z-index: 9999; }
             .sticker { width: 100%; padding: 1mm 0; display: flex; flex-direction: column; justify-content: center; align-items: center; page-break-after: always; break-after: page; }
             .sticker-name { font-family: 'Roboto', Arial, sans-serif !important; font-size: 22px; font-weight: 900; text-transform: uppercase; line-height: 1; text-align: center; color: #000; }

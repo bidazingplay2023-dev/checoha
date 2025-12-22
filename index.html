@@ -324,19 +324,17 @@
 
         /* --- PRINT STYLES --- */
         @media print {
-            /* 1. Reset Page & Margins */
-            @page { 
-                margin: 0 !important; 
-                size: auto; /* Adapts to selected paper size */
-            }
+            /* 1. Reset Page */
+            /* Note: @page size is now handled dynamically via JS injection for flexibility */
             
             html, body { 
-                width: 100%; 
-                height: 100%; 
+                /* Quan trọng: Để mặc định, JS sẽ override */
+                width: auto; 
+                height: auto; 
                 margin: 0 !important; 
                 padding: 0 !important; 
                 background: white !important; 
-                overflow: hidden; /* Hide UI scrollbars */
+                overflow: visible !important; 
             }
 
             /* 2. Hide UI Elements */
@@ -351,50 +349,9 @@
                 top: 0; 
                 left: 0; 
                 width: 100%; 
-                height: 100%; 
+                height: auto; 
                 background-color: white; 
                 z-index: 9999; 
-            }
-
-            /* 4. Sticker Layout */
-            /* Each sticker occupies 100% of the viewport height (the "page") to center content. */
-            .sticker { 
-                width: 100%; 
-                height: 100vh; 
-                display: flex; 
-                flex-direction: column; 
-                justify-content: center; 
-                align-items: center; 
-                page-break-after: always; 
-                break-after: page;
-                box-sizing: border-box;
-                padding: 2mm; 
-                overflow: hidden;
-            }
-
-            /* 5. Content Typography */
-            .sticker-name { 
-                font-family: 'Roboto', Helvetica, Arial, sans-serif !important; 
-                font-size: 24px; 
-                font-weight: 900; 
-                text-transform: uppercase; 
-                line-height: 1.1; 
-                text-align: center; 
-                color: #000; 
-            }
-
-            .sticker-custom-note { 
-                font-family: 'Roboto', Helvetica, Arial, sans-serif !important; 
-                font-size: 16px; 
-                font-weight: bold; 
-                background-color: #000; 
-                color: #fff !important; 
-                padding: 4px 10px; 
-                border-radius: 4px; 
-                margin-top: 5px; 
-                text-align: center; 
-                -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact; 
             }
         }
     </style>

@@ -335,16 +335,16 @@
                 position: static !important;
             }
 
-            /* 2. Hide UI Elements */
+            /* Ẩn UI App */
             #ui-container, .modal-overlay, #toast { 
                 display: none !important; 
                 height: 0 !important;
             }
 
-            /* 3. Display Print Section */
+            /* Hiển thị vùng in */
             #print-section { 
                 display: block !important; 
-                position: absolute; 
+                position: relative !important; /* QUAN TRỌNG: Sửa thành relative để tránh lỗi dồn trang */
                 top: 0; 
                 left: 0; 
                 width: 100%; 
@@ -358,7 +358,7 @@
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
     "react/": "https://esm.sh/react@^19.2.3/",
     "path": "https://esm.sh/path@^0.12.7",
     "vite": "https://esm.sh/vite@^7.3.0",
@@ -372,6 +372,5 @@
 <body>
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
-<script type="module" src="/index.tsx"></script>
 </body>
 </html>

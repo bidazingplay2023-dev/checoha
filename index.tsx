@@ -256,12 +256,14 @@ const App = () => {
         .catch(err => console.error(err));
     };
 
+    // --- HÀM IN ẤN ĐÃ ĐƯỢC SỬA LỖI ---
     const processPrintAndSave = () => {
         let totalMoney = 0;
         cart.forEach(i => totalMoney += (i.price * (Number(i.quantity) || 0)));
         
-        // 1. TUYỆT ĐỐI KHÔNG ĐÓNG MODAL Ở ĐÂY để giữ ngữ cảnh (User Gesture)
-        // setShowConfirmModal(false); 
+        // 1. KHÔNG đóng modal UI ngay ở đây. 
+        // iOS cần giữ tương tác user (modal đang mở) cho đến khi lệnh in thực sự được gọi.
+        // CSS @media print sẽ lo việc ẩn UI đi.
 
         const printSection = document.getElementById('print-section');
         if (!printSection) return;
@@ -274,9 +276,9 @@ const App = () => {
             document.head.appendChild(styleTag);
         }
 
-        // SỬA LỖI:
-        // - position: static (thay vì absolute) để content nằm tự nhiên trong luồng, trình duyệt tự chia trang.
-        // - Ẩn modal bằng CSS @media print chứ không đóng bằng React.
+        // SỬA LỖI IN 100 TEM VÀO 1 TRANG:
+        // Dùng position: relative thay vì absolute.
+        // Dùng break-after: page cho từng tem.
         styleTag.innerHTML = `
             @media print {
                 @page {
@@ -284,33 +286,34 @@ const App = () => {
                     size: ${printConfig.width}mm ${printConfig.height}mm;
                 }
                 html, body {
-                    width: 100% !important;
-                    height: auto !important; 
-                    overflow: visible !important; 
+                    width: 100%;
+                    height: 100%;
                     margin: 0 !important;
                     padding: 0 !important;
                     background: #fff !important;
                 }
-                
-                /* Ẩn toàn bộ giao diện App và Modal */
-                #ui-container, .modal-overlay { 
+                /* Ẩn hoàn toàn giao diện App */
+                #ui-container, .modal-overlay, #toast { 
                     display: none !important; 
                 }
-                
                 /* Hiển thị vùng in */
                 #print-section {
                     display: block !important;
-                    position: static !important; /* QUAN TRỌNG: Để static để in nhiều trang */
-                    width: 100% !important; 
-                    height: auto !important;
-                    overflow: visible !important;
+                    position: relative !important; /* QUAN TRỌNG: Fix lỗi dồn trang */
+                    width: ${printConfig.width}mm !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background: #fff !important;
                 }
-
                 .sticker {
                     width: ${printConfig.width}mm;
                     height: ${printConfig.height}mm;
+                    
+                    /* Ngắt trang chuẩn */
                     page-break-after: always;
                     break-after: page;
+                    break-inside: avoid;
+                    
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
@@ -345,7 +348,7 @@ const App = () => {
             }
         `;
 
-        // 3. Chuẩn bị HTML (Đồng bộ)
+        // 3. Chuẩn bị HTML
         printSection.innerHTML = '';
         let printHTML = '';
         cart.forEach(item => {
@@ -362,25 +365,28 @@ const App = () => {
         });
         printSection.innerHTML = printHTML;
 
-        // 4. GỌI LỆNH IN NGAY LẬP TỨC (Đồng bộ)
-        try {
-            window.print();
-        } catch (e) {
-            alert("Lỗi gọi máy in: " + e);
-        }
-
-        // 5. Xử lý sau khi in
-        setTimeout(() => {
-            const isPrinted = window.confirm("🖨️ XÁC NHẬN:\n\nBạn đã in phiếu thành công chưa?\n\n- Bấm [OK] để LƯU DOANH THU & XÓA ĐƠN.\n- Bấm [Cancel] nếu bạn hủy in.");
-            
-            if (isPrinted) {
-                sendToGoogleSheet(totalMoney);
-                clearCart();
-                setShowConfirmModal(false); // CHỈ ĐÓNG MODAL KHI ĐÃ XÁC NHẬN IN XONG
-            }
-            // Dọn dẹp DOM in
-            printSection.innerHTML = ''; 
-        }, 500);
+        // 4. GỌI LỆNH IN
+        // Sử dụng requestAnimationFrame để đảm bảo browser đã render xong tem mới gọi in
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                window.print();
+                
+                // 5. Xử lý sau khi in (Bây giờ mới đóng Modal)
+                setTimeout(() => {
+                    const isPrinted = window.confirm("🖨️ XÁC NHẬN:\n\nBạn đã in phiếu thành công chưa?\n\n- [OK] để LƯU DOANH THU & XÓA ĐƠN.\n- [Cancel] nếu bạn hủy in.");
+                    
+                    if (isPrinted) {
+                        sendToGoogleSheet(totalMoney);
+                        clearCart();
+                        setShowConfirmModal(false); // Đóng modal ở đây
+                    } else {
+                        // Nếu hủy in thì giữ nguyên modal để user có thể bấm in lại
+                    }
+                    // Dọn dẹp DOM in
+                    printSection.innerHTML = ''; 
+                }, 500);
+            }, 50);
+        });
     };
 
     // --- STATS ---

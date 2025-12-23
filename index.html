@@ -321,49 +321,16 @@
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
         }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-
-        /* --- PRINT STYLES --- */
-        @media print {
-            /* Fix lỗi 100 món in ra 1 trang */
-            html, body { 
-                width: 100%; 
-                height: auto !important; 
-                margin: 0 !important; 
-                padding: 0 !important; 
-                background: white !important; 
-                overflow: visible !important; 
-                position: static !important;
-            }
-
-            /* Ẩn UI App */
-            #ui-container, .modal-overlay, #toast { 
-                display: none !important; 
-                height: 0 !important;
-            }
-
-            /* Hiển thị vùng in */
-            #print-section { 
-                display: block !important; 
-                position: relative !important; /* QUAN TRỌNG: Sửa thành relative để tránh lỗi dồn trang */
-                top: 0; 
-                left: 0; 
-                width: 100%; 
-                height: auto; 
-                background-color: white; 
-                z-index: 9999; 
-            }
-        }
     </style>
 <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "path": "https://esm.sh/path@^0.12.7",
-    "vite": "https://esm.sh/vite@^7.3.0",
     "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "url": "https://esm.sh/url@^0.11.4"
+    "path": "https://esm.sh/path@^0.12.7",
+    "vite": "https://esm.sh/vite@^7.3.0"
   }
 }
 </script>
@@ -372,5 +339,6 @@
 <body>
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>

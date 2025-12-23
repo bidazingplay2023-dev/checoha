@@ -42,10 +42,6 @@ const App = () => {
     const [showPasswordChars, setShowPasswordChars] = useState(false);
     const [passwordError, setPasswordError] = useState("");
     const [toastMessage, setToastMessage] = useState("");
-
-    // Print Configuration State
-    const [showPrintConfig, setShowPrintConfig] = useState(false);
-    const [printConfig, setPrintConfig] = useState({ width: 50, height: 30 }); // Default 50mm x 30mm
     
     // Stats State
     const [stats, setStats] = useState({ today: 0, month: 0, year: 0, count: 0 });
@@ -58,16 +54,6 @@ const App = () => {
     // Refs
     const cartListRef = useRef<HTMLDivElement>(null);
     const noteInputsRef = useRef<Record<number, HTMLInputElement | null>>({});
-
-    // Load print config from localStorage on mount
-    useEffect(() => {
-        const savedConfig = localStorage.getItem('printConfig');
-        if (savedConfig) {
-            try {
-                setPrintConfig(JSON.parse(savedConfig));
-            } catch (e) { console.error("Error loading config", e); }
-        }
-    }, []);
 
     // Filter Menu Logic
     const filteredMenu = MENU.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -230,11 +216,6 @@ const App = () => {
         }));
     };
 
-    const savePrintConfig = () => {
-        localStorage.setItem('printConfig', JSON.stringify(printConfig));
-        setShowPrintConfig(false);
-    };
-
     // --- PRINT & SAVE ---
 
     const showToast = () => {
@@ -256,136 +237,163 @@ const App = () => {
         .catch(err => console.error(err));
     };
 
-    // --- HÀM IN ẤN ĐÃ ĐƯỢC SỬA LỖI ---
+    /**
+     * In phiếu thông qua Iframe ẩn.
+     * Giải quyết vấn đề:
+     * 1. iOS chặn popup in (giữ context user action).
+     * 2. Layout bị vỡ khi chọn khổ giấy khác A4 (CSS isolated).
+     * 3. Header/Footer ngày giờ của trình duyệt (dùng @page margin 0).
+     */
+    const printReceipt = (items: CartItem[], onAfterPrint: () => void) => {
+        // 1. Tạo iframe ẩn
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.width = '0px';
+        iframe.style.height = '0px';
+        iframe.style.border = 'none';
+        iframe.style.zIndex = '-1';
+        document.body.appendChild(iframe);
+
+        const doc = iframe.contentWindow?.document;
+        if (!doc) {
+            document.body.removeChild(iframe);
+            onAfterPrint();
+            return;
+        }
+
+        // 2. Tạo nội dung HTML cho tem
+        let stickersHTML = '';
+        items.forEach(item => {
+            const qty = Number(item.quantity) || 0;
+            for (let i = 0; i < qty; i++) {
+                const notePart = (item.note && item.note.trim() !== "") 
+                    ? `<div class="sticker-note">${item.note}</div>` 
+                    : '';
+                const countLabel = qty > 1 ? `<span style="font-size: 10px; opacity: 0.6; margin-left: 4px;">(${i+1}/${qty})</span>` : '';
+                
+                stickersHTML += `
+                    <div class="sticker">
+                        <div class="sticker-content">
+                            <div class="sticker-name">${item.name}</div>
+                            ${notePart}
+                            <div class="sticker-meta">${formatK(item.price)} ${countLabel}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        // 3. Viết vào iframe
+        doc.open();
+        doc.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>In Tem</title>
+                <style>
+                    /* QUAN TRỌNG: Reset khổ giấy để máy in tự nhận diện khổ tem */
+                    @page { 
+                        size: auto; 
+                        margin: 0mm; 
+                    }
+                    body, html { 
+                        margin: 0; 
+                        padding: 0; 
+                        background: #fff; 
+                        font-family: 'Roboto', sans-serif;
+                    }
+                    .sticker {
+                        /* Đảm bảo mỗi tem là 1 trang in riêng biệt */
+                        page-break-after: always;
+                        break-after: page;
+                        
+                        /* Căn giữa nội dung */
+                        width: 100%;
+                        box-sizing: border-box;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
+                        text-align: center;
+                        padding: 2mm 1mm;
+                        
+                        /* Đường viền ảo để dễ debug trên màn hình, khi in nhiệt thường không cần */
+                        border-bottom: 1px dashed #eee; 
+                    }
+                    /* Container nội dung để tránh bị cắt sát lề */
+                    .sticker-content {
+                        width: 95%;
+                    }
+                    .sticker-name {
+                        font-size: 22px;
+                        font-weight: 900;
+                        line-height: 1.1;
+                        text-transform: uppercase;
+                        color: #000;
+                        margin-bottom: 4px;
+                    }
+                    .sticker-note {
+                        display: inline-block;
+                        background: #000;
+                        color: #fff;
+                        font-weight: bold;
+                        font-size: 14px;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        margin: 2px 0 4px 0;
+                        line-height: 1.2;
+                    }
+                    .sticker-meta {
+                        font-size: 12px;
+                        font-weight: 600;
+                        color: #333;
+                    }
+                </style>
+            </head>
+            <body>${stickersHTML}</body>
+            </html>
+        `);
+        doc.close();
+
+        // 4. Lệnh in
+        // Timeout ngắn (100ms) đủ để render DOM nhưng không quá lâu để bị iOS chặn (lost user gesture).
+        setTimeout(() => {
+            try {
+                iframe.contentWindow?.focus();
+                iframe.contentWindow?.print();
+            } catch (e) {
+                console.error("Print error:", e);
+                alert("Lỗi gọi máy in. Vui lòng thử lại.");
+            }
+
+            // Cleanup sau khi hộp thoại in đóng lại (hoặc sau 1 khoảng thời gian an toàn)
+            // Lưu ý: window.print() chặn luồng trên Desktop nhưng không chặn trên mobile.
+            // Ta sẽ đợi user confirm ở bước tiếp theo trong modal.
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+                onAfterPrint();
+            }, 500);
+
+        }, 100); 
+    };
+
     const processPrintAndSave = () => {
         let totalMoney = 0;
         cart.forEach(i => totalMoney += (i.price * (Number(i.quantity) || 0)));
-        
-        // 1. KHÔNG đóng modal UI ngay ở đây. 
-        // iOS cần giữ tương tác user (modal đang mở) cho đến khi lệnh in thực sự được gọi.
-        // CSS @media print sẽ lo việc ẩn UI đi.
+        setShowConfirmModal(false);
 
-        const printSection = document.getElementById('print-section');
-        if (!printSection) return;
-
-        // 2. Chuẩn bị CSS
-        let styleTag = document.getElementById('dynamic-print-style');
-        if (!styleTag) {
-            styleTag = document.createElement('style');
-            styleTag.id = 'dynamic-print-style';
-            document.head.appendChild(styleTag);
-        }
-
-        // SỬA LỖI IN 100 TEM VÀO 1 TRANG:
-        // Dùng position: relative thay vì absolute.
-        // Dùng break-after: page cho từng tem.
-        styleTag.innerHTML = `
-            @media print {
-                @page {
-                    margin: 0 !important;
-                    size: ${printConfig.width}mm ${printConfig.height}mm;
-                }
-                html, body {
-                    width: 100%;
-                    height: 100%;
-                    margin: 0 !important;
-                    padding: 0 !important;
-                    background: #fff !important;
-                }
-                /* Ẩn hoàn toàn giao diện App */
-                #ui-container, .modal-overlay, #toast { 
-                    display: none !important; 
-                }
-                /* Hiển thị vùng in */
-                #print-section {
-                    display: block !important;
-                    position: relative !important; /* QUAN TRỌNG: Fix lỗi dồn trang */
-                    width: ${printConfig.width}mm !important;
-                    margin: 0 !important;
-                    padding: 0 !important;
-                    background: #fff !important;
-                }
-                .sticker {
-                    width: ${printConfig.width}mm;
-                    height: ${printConfig.height}mm;
-                    
-                    /* Ngắt trang chuẩn */
-                    page-break-after: always;
-                    break-after: page;
-                    break-inside: avoid;
-                    
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    overflow: hidden;
-                    padding: 1mm;
-                    box-sizing: border-box;
-                    border: none;
-                }
-                .sticker-name {
-                    font-size: 18px; 
-                    font-weight: 900;
-                    text-transform: uppercase;
-                    text-align: center;
-                    line-height: 1.1;
-                    width: 100%;
-                    word-wrap: break-word;
-                }
-                .sticker-custom-note {
-                    margin-top: 2px;
-                    font-size: 14px;
-                    font-weight: bold;
-                    background: #000;
-                    color: #fff !important;
-                    padding: 2px 6px;
-                    border-radius: 4px;
-                    text-align: center;
-                    -webkit-print-color-adjust: exact;
-                    print-color-adjust: exact;
-                    max-width: 100%;
-                }
-            }
-        `;
-
-        // 3. Chuẩn bị HTML
-        printSection.innerHTML = '';
-        let printHTML = '';
-        cart.forEach(item => {
-            const notePart = (item.note && item.note.trim() !== "") 
-                ? `<div class="sticker-custom-note">${item.note}</div>` 
-                : '';
-            const qty = Number(item.quantity) || 0;
-            for (let q = 0; q < qty; q++) {
-                printHTML += `<div class="sticker">
-                    <div class="sticker-name">${item.name}</div>
-                    ${notePart}
-                </div>`;
-            }
-        });
-        printSection.innerHTML = printHTML;
-
-        // 4. GỌI LỆNH IN
-        // Sử dụng requestAnimationFrame để đảm bảo browser đã render xong tem mới gọi in
-        requestAnimationFrame(() => {
+        // Gọi hàm in mới
+        printReceipt(cart, () => {
+            // Callback này chạy sau khi lệnh in được gửi đi.
+            // Do mobile không biết chính xác khi nào in xong, ta dùng confirm thủ công.
             setTimeout(() => {
-                window.print();
+                const isPrinted = window.confirm("🖨️ XÁC NHẬN:\n\nPhiếu đã in ra chưa?\n\n- Bấm [OK] để LƯU DOANH THU & XÓA ĐƠN.\n- Bấm [Cancel] để giữ lại đơn nếu in lỗi.");
                 
-                // 5. Xử lý sau khi in (Bây giờ mới đóng Modal)
-                setTimeout(() => {
-                    const isPrinted = window.confirm("🖨️ XÁC NHẬN:\n\nBạn đã in phiếu thành công chưa?\n\n- [OK] để LƯU DOANH THU & XÓA ĐƠN.\n- [Cancel] nếu bạn hủy in.");
-                    
-                    if (isPrinted) {
-                        sendToGoogleSheet(totalMoney);
-                        clearCart();
-                        setShowConfirmModal(false); // Đóng modal ở đây
-                    } else {
-                        // Nếu hủy in thì giữ nguyên modal để user có thể bấm in lại
-                    }
-                    // Dọn dẹp DOM in
-                    printSection.innerHTML = ''; 
-                }, 500);
-            }, 50);
+                if (isPrinted) {
+                    sendToGoogleSheet(totalMoney);
+                    clearCart();
+                }
+            }, 500);
         });
     };
 
@@ -613,71 +621,23 @@ const App = () => {
                 {showConfirmModal && (
                     <div id="confirm-modal" className="modal-overlay">
                         <div className="modal-box">
-                            {!showPrintConfig ? (
-                                <>
-                                    <div className="modal-title">XÁC NHẬN ĐƠN HÀNG</div>
-                                    <div className="confirm-list">
-                                        {cart.map((item, idx) => (
-                                            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px', borderBottom: '1px dashed #cbd5e1', paddingBottom: '8px'}} key={idx}>
-                                                <div style={{ flex: 1 }}>
-                                                    <b style={{marginRight: '5px'}}>x{item.quantity}</b> {item.name} 
-                                                    {item.note && <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '2px' }}>Note: {item.note}</div>}
-                                                </div>
-                                                <div style={{ fontWeight: 'bold' }}>{formatK(item.price * (Number(item.quantity) || 0))}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div style={{textAlign: 'right', fontSize: '20px', fontWeight: '900', color: '#3b82f6', margin: '16px 0'}}>Tổng: {formatK(cartTotal)}</div>
-                                    
-                                    {/* Print Settings Link */}
-                                    <div style={{textAlign: 'center', marginBottom: '16px'}}>
-                                        <span 
-                                            onClick={() => setShowPrintConfig(true)}
-                                            style={{ color: '#64748b', fontSize: '13px', textDecoration: 'underline', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
-                                        >
-                                            ⚙️ Cấu hình khổ giấy in ({printConfig.width}x{printConfig.height}mm)
-                                        </span>
-                                    </div>
-
-                                    <div style={{display: 'flex', gap: '12px'}}>
-                                        <button className="modal-btn btn-cancel" style={{flex: 1, padding: '12px', border: 'none', borderRadius: '12px', background: '#f1f5f9', fontWeight: 'bold', color: '#64748b'}} onClick={() => setShowConfirmModal(false)}>Quay lại</button>
-                                        <button className="modal-btn btn-confirm" style={{flex: 1, padding: '12px', border: 'none', borderRadius: '12px', background: '#3b82f6', fontWeight: 'bold', color: 'white'}} onClick={processPrintAndSave}>✅ IN PHIẾU</button>
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="modal-title">CẤU HÌNH KHỔ GIẤY</div>
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <div style={{ marginBottom: '12px' }}>
-                                            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '4px', color: '#475569' }}>Chiều Rộng (Width - mm)</label>
-                                            <input 
-                                                type="number" 
-                                                value={printConfig.width}
-                                                onChange={(e) => setPrintConfig({...printConfig, width: Number(e.target.value)})}
-                                                className="note-input"
-                                                style={{ fontSize: '16px' }}
-                                            />
+                            <div className="modal-title">XÁC NHẬN ĐƠN HÀNG</div>
+                            <div className="confirm-list">
+                                {cart.map((item, idx) => (
+                                    <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px', borderBottom: '1px dashed #cbd5e1', paddingBottom: '8px'}} key={idx}>
+                                        <div style={{ flex: 1 }}>
+                                            <b style={{marginRight: '5px'}}>x{item.quantity}</b> {item.name} 
+                                            {item.note && <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '2px' }}>Note: {item.note}</div>}
                                         </div>
-                                        <div>
-                                            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '4px', color: '#475569' }}>Chiều Cao (Height - mm)</label>
-                                            <input 
-                                                type="number" 
-                                                value={printConfig.height}
-                                                onChange={(e) => setPrintConfig({...printConfig, height: Number(e.target.value)})}
-                                                className="note-input"
-                                                style={{ fontSize: '16px' }}
-                                            />
-                                        </div>
-                                        <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '10px', fontStyle: 'italic' }}>
-                                            * Hệ thống sẽ tự động lưu cấu hình này cho lần sau.
-                                        </p>
+                                        <div style={{ fontWeight: 'bold' }}>{formatK(item.price * (Number(item.quantity) || 0))}</div>
                                     </div>
-                                    <div style={{display: 'flex', gap: '12px'}}>
-                                        <button style={{flex: 1, padding: '12px', border: 'none', borderRadius: '12px', background: '#f1f5f9', fontWeight: 'bold', color: '#64748b'}} onClick={() => setShowPrintConfig(false)}>Hủy</button>
-                                        <button style={{flex: 1, padding: '12px', border: 'none', borderRadius: '12px', background: '#3b82f6', fontWeight: 'bold', color: 'white'}} onClick={savePrintConfig}>LƯU CẤU HÌNH</button>
-                                    </div>
-                                </>
-                            )}
+                                ))}
+                            </div>
+                            <div style={{textAlign: 'right', fontSize: '20px', fontWeight: '900', color: '#3b82f6', margin: '16px 0'}}>Tổng: {formatK(cartTotal)}</div>
+                            <div style={{display: 'flex', gap: '12px'}}>
+                                <button className="modal-btn btn-cancel" style={{flex: 1, padding: '12px', border: 'none', borderRadius: '12px', background: '#f1f5f9', fontWeight: 'bold', color: '#64748b'}} onClick={() => setShowConfirmModal(false)}>Quay lại</button>
+                                <button className="modal-btn btn-confirm" style={{flex: 1, padding: '12px', border: 'none', borderRadius: '12px', background: '#3b82f6', fontWeight: 'bold', color: 'white'}} onClick={processPrintAndSave}>✅ IN PHIẾU</button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -772,9 +732,6 @@ const App = () => {
                 {/* TOAST */}
                 <div id="toast" className={toastMessage ? 'show' : ''}>{toastMessage}</div>
             </div>
-
-            {/* PRINT SECTION (Moved outside ui-container) */}
-            <div id="print-section"></div>
         </React.Fragment>
     );
 };

@@ -260,13 +260,13 @@ const App = () => {
         let totalMoney = 0;
         cart.forEach(i => totalMoney += (i.price * (Number(i.quantity) || 0)));
         
-        // 1. Đóng modal UI ngay lập tức
-        setShowConfirmModal(false);
+        // 1. TUYỆT ĐỐI KHÔNG ĐÓNG MODAL Ở ĐÂY để giữ ngữ cảnh (User Gesture)
+        // setShowConfirmModal(false); 
 
         const printSection = document.getElementById('print-section');
         if (!printSection) return;
 
-        // 2. Chuẩn bị CSS (Đồng bộ)
+        // 2. Chuẩn bị CSS
         let styleTag = document.getElementById('dynamic-print-style');
         if (!styleTag) {
             styleTag = document.createElement('style');
@@ -274,9 +274,9 @@ const App = () => {
             document.head.appendChild(styleTag);
         }
 
-        // SỬA LỖI IN 1 TRANG VÀ TREO MÁY
-        // - html, body: Bắt buộc height: auto, overflow: visible
-        // - @page: Dùng đúng kích thước user cấu hình
+        // SỬA LỖI:
+        // - position: static (thay vì absolute) để content nằm tự nhiên trong luồng, trình duyệt tự chia trang.
+        // - Ẩn modal bằng CSS @media print chứ không đóng bằng React.
         styleTag.innerHTML = `
             @media print {
                 @page {
@@ -285,32 +285,27 @@ const App = () => {
                 }
                 html, body {
                     width: 100% !important;
-                    height: auto !important; /* Quan trọng: Fix lỗi in 1 trang */
-                    overflow: visible !important; /* Quan trọng: Fix lỗi in 1 trang */
+                    height: auto !important; 
+                    overflow: visible !important; 
                     margin: 0 !important;
                     padding: 0 !important;
                     background: #fff !important;
-                    display: block !important;
                 }
-                /* Ẩn hoàn toàn giao diện App */
+                
+                /* Ẩn toàn bộ giao diện App và Modal */
                 #ui-container, .modal-overlay { 
                     display: none !important; 
-                    height: 0 !important;
-                    overflow: hidden !important;
                 }
+                
                 /* Hiển thị vùng in */
                 #print-section {
                     display: block !important;
-                    position: absolute !important;
-                    top: 0 !important;
-                    left: 0 !important;
-                    width: ${printConfig.width}mm !important; /* Giới hạn chiều rộng theo khổ giấy */
-                    margin: 0 !important;
-                    padding: 0 !important;
-                    background: #fff !important;
+                    position: static !important; /* QUAN TRỌNG: Để static để in nhiều trang */
+                    width: 100% !important; 
                     height: auto !important;
                     overflow: visible !important;
                 }
+
                 .sticker {
                     width: ${printConfig.width}mm;
                     height: ${printConfig.height}mm;
@@ -368,8 +363,6 @@ const App = () => {
         printSection.innerHTML = printHTML;
 
         // 4. GỌI LỆNH IN NGAY LẬP TỨC (Đồng bộ)
-        // Đây là bước quan trọng nhất để fix lỗi iOS chặn popup.
-        // Tuyệt đối không dùng setTimeout hay requestAnimationFrame bọc window.print()
         try {
             window.print();
         } catch (e) {
@@ -377,14 +370,13 @@ const App = () => {
         }
 
         // 5. Xử lý sau khi in
-        // Hộp thoại confirm sẽ hiện sau khi user đóng cửa sổ in (hoặc hiện đè lên tùy trình duyệt)
-        // Dùng setTimeout ở đây được vì lệnh in đã được gửi đi rồi.
         setTimeout(() => {
             const isPrinted = window.confirm("🖨️ XÁC NHẬN:\n\nBạn đã in phiếu thành công chưa?\n\n- Bấm [OK] để LƯU DOANH THU & XÓA ĐƠN.\n- Bấm [Cancel] nếu bạn hủy in.");
             
             if (isPrinted) {
                 sendToGoogleSheet(totalMoney);
                 clearCart();
+                setShowConfirmModal(false); // CHỈ ĐÓNG MODAL KHI ĐÃ XÁC NHẬN IN XONG
             }
             // Dọn dẹp DOM in
             printSection.innerHTML = ''; 

@@ -340,8 +340,8 @@
                 height: auto !important;
             }
             
-            /* ẨN GIAO DIỆN APP */
-            #ui-container, .modal-overlay, #toast { 
+            /* ẨN GIAO DIỆN APP: ẨN ROOT ĐỂ SẠCH SẼ HƠN */
+            #root, .modal-overlay, #toast { 
                 display: none !important; 
             }
             
@@ -358,6 +358,9 @@
             .sticker {
                 page-break-after: always;
                 break-after: page;
+                /* QUAN TRỌNG: Ngăn chặn in nhiều tem 1 trang nếu nội dung ngắn */
+                break-inside: avoid; 
+                
                 width: 100%;
                 box-sizing: border-box;
                 display: flex;
@@ -366,8 +369,9 @@
                 align-items: center;
                 text-align: center;
                 padding: 2mm 1mm;
-                /* Viền đứt để dễ căn chỉnh (có thể bỏ nếu máy in chuẩn) */
-                /* border-bottom: 1px dashed #eee; */
+                
+                /* Mẹo: Đặt chiều cao tối thiểu để ép trình duyệt cắt trang nếu cần */
+                min-height: 80px; 
             }
             .sticker-content {
                 width: 95%;

@@ -237,22 +237,19 @@ const App = () => {
         .catch(err => console.error(err));
     };
 
-    /**
-     * In phiếu trực tiếp trên window chính (thông qua @media print).
-     * Giải quyết triệt để vấn đề:
-     * 1. iOS chặn popup: Sử dụng window.print() trực tiếp trong luồng sự kiện click.
-     * 2. Layout & Ngày giờ: Sử dụng @page trong CSS global thay vì iframe.
-     */
-    const printReceipt = (items: CartItem[], onAfterPrint: () => void) => {
+    const processPrintAndSave = () => {
+        // QUAN TRỌNG: Không được gọi setShowConfirmModal(false) ở đây.
+        // Việc thay đổi state sẽ làm mất "User Gesture" trên iOS -> gây lỗi chặn in.
+        
         const printArea = document.getElementById('print-area');
         if (!printArea) {
             alert("Lỗi: Không tìm thấy khu vực in!");
             return;
         }
 
-        // 1. Tạo nội dung HTML cho tem
+        // 1. Tạo HTML (Đồng bộ)
         let stickersHTML = '';
-        items.forEach(item => {
+        cart.forEach(item => {
             const qty = Number(item.quantity) || 0;
             for (let i = 0; i < qty; i++) {
                 const notePart = (item.note && item.note.trim() !== "") 
@@ -272,37 +269,27 @@ const App = () => {
             }
         });
 
-        // 2. Gán nội dung vào div in ẩn (Synchronous - Đồng bộ)
+        // 2. Gán HTML (Đồng bộ)
         printArea.innerHTML = stickersHTML;
 
-        // 3. Gọi lệnh in ngay lập tức (Không dùng setTimeout để giữ User Gesture)
+        // 3. GỌI IN NGAY LẬP TỨC (Đồng bộ với sự kiện Click)
+        // Tuyệt đối không để lệnh này trong setTimeout, Promise, hay sau lệnh setState
         window.print();
 
-        // 4. Xử lý sau khi in
-        onAfterPrint();
-    };
-
-    const processPrintAndSave = () => {
-        let totalMoney = 0;
-        cart.forEach(i => totalMoney += (i.price * (Number(i.quantity) || 0)));
-        
-        // Đóng modal xác nhận trước khi in
-        setShowConfirmModal(false);
-
-        // Gọi hàm in mới
-        printReceipt(cart, () => {
-            // Callback này chạy ngay sau khi lệnh window.print() được gọi.
-            // Trên mobile, luồng code chạy tiếp ngay cả khi dialog in đang mở.
-            // Ta dùng setTimeout nhỏ để đảm bảo dialog confirm hiện ra sau dialog in (hoặc song song).
-            setTimeout(() => {
-                const isPrinted = window.confirm("🖨️ XÁC NHẬN:\n\nPhiếu đã in ra chưa?\n\n- Bấm [OK] để LƯU DOANH THU & XÓA ĐƠN.\n- Bấm [Cancel] để giữ lại đơn nếu in lỗi.");
-                
-                if (isPrinted) {
-                    sendToGoogleSheet(totalMoney);
-                    clearCart();
-                }
-            }, 500);
-        });
+        // 4. Xử lý sau khi in (Bất đồng bộ)
+        // Dùng setTimeout để tách luồng logic sau khi dialog in đã hiện (hoặc đã đóng)
+        setTimeout(() => {
+            const isPrinted = window.confirm("🖨️ XÁC NHẬN:\n\nPhiếu đã in ra chưa?\n\n- Bấm [OK] để LƯU DOANH THU & XÓA ĐƠN.\n- Bấm [Cancel] để giữ lại đơn nếu in lỗi.");
+            
+            if (isPrinted) {
+                let totalMoney = 0;
+                cart.forEach(i => totalMoney += (i.price * (Number(i.quantity) || 0)));
+                sendToGoogleSheet(totalMoney);
+                clearCart();
+                setShowConfirmModal(false); // Bây giờ mới được đóng modal
+            } 
+            // Nếu bấm Cancel, modal vẫn giữ nguyên để khách có thể in lại hoặc sửa đơn
+        }, 500);
     };
 
     // --- STATS ---

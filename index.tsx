@@ -36,6 +36,8 @@ const App = () => {
     
     // UI State
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [printStep, setPrintStep] = useState<'preview' | 'check'>('preview'); // Trạng thái in: 'preview' (xem trước) -> 'check' (xác nhận lưu)
+
     const [showStatsModal, setShowStatsModal] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [passwordInput, setPasswordInput] = useState("");
@@ -94,6 +96,7 @@ const App = () => {
     // --- ACTIONS ---
 
     const addToCart = (item: MenuItem) => {
+        setPrintStep('preview'); // Reset lại trạng thái in khi sửa đơn
         setCart(prev => {
             const existingIndex = prev.findIndex(i => i.name === item.name && i.note === "" && !i.isNoteOpen);
             if (existingIndex !== -1) {
@@ -107,6 +110,7 @@ const App = () => {
     };
 
     const changeQty = (index: number, delta: number) => {
+        setPrintStep('preview');
         setCart(prev => {
             const newCart = [...prev];
             newCart[index].quantity += delta;
@@ -118,6 +122,7 @@ const App = () => {
     };
 
     const handleDirectQtyChange = (index: number, valStr: string) => {
+        setPrintStep('preview');
         if (valStr === "") {
             setCart(prev => {
                 const newCart = [...prev];
@@ -149,15 +154,18 @@ const App = () => {
     };
 
     const removeLine = (index: number) => {
+        setPrintStep('preview');
         setCart(prev => prev.filter((_, i) => i !== index));
     };
 
     const clearCart = () => {
         setCart([]);
         setSearchTerm("");
+        setPrintStep('preview');
     };
 
     const updateNote = (index: number, val: string) => {
+        setPrintStep('preview');
         setCart(prev => {
             const newCart = [...prev];
             newCart[index].note = val;
@@ -166,6 +174,7 @@ const App = () => {
     };
 
     const toggleNote = (index: number, isChecked: boolean) => {
+        setPrintStep('preview');
         if (isChecked) {
             const item = cart[index];
             if (item.quantity > 1) {
@@ -237,17 +246,12 @@ const App = () => {
         .catch(err => console.error(err));
     };
 
-    const processPrintAndSave = () => {
-        // QUAN TRỌNG: Không được gọi setShowConfirmModal(false) ở đây.
-        // Việc thay đổi state sẽ làm mất "User Gesture" trên iOS -> gây lỗi chặn in.
-        
+    // BƯỚC 1: Chỉ thực hiện lệnh in thuần túy
+    const handlePrintOnly = () => {
         const printArea = document.getElementById('print-area');
-        if (!printArea) {
-            alert("Lỗi: Không tìm thấy khu vực in!");
-            return;
-        }
+        if (!printArea) return;
 
-        // 1. Tạo HTML (Đồng bộ)
+        // Tạo HTML cho tem
         let stickersHTML = '';
         cart.forEach(item => {
             const qty = Number(item.quantity) || 0;
@@ -269,27 +273,32 @@ const App = () => {
             }
         });
 
-        // 2. Gán HTML (Đồng bộ)
+        // Gán HTML
         printArea.innerHTML = stickersHTML;
 
-        // 3. GỌI IN NGAY LẬP TỨC (Đồng bộ với sự kiện Click)
-        // Tuyệt đối không để lệnh này trong setTimeout, Promise, hay sau lệnh setState
+        // Gọi in NGAY LẬP TỨC (không timeout, không promise)
         window.print();
 
-        // 4. Xử lý sau khi in (Bất đồng bộ)
-        // Dùng setTimeout để tách luồng logic sau khi dialog in đã hiện (hoặc đã đóng)
-        setTimeout(() => {
-            const isPrinted = window.confirm("🖨️ XÁC NHẬN:\n\nPhiếu đã in ra chưa?\n\n- Bấm [OK] để LƯU DOANH THU & XÓA ĐƠN.\n- Bấm [Cancel] để giữ lại đơn nếu in lỗi.");
-            
-            if (isPrinted) {
-                let totalMoney = 0;
-                cart.forEach(i => totalMoney += (i.price * (Number(i.quantity) || 0)));
-                sendToGoogleSheet(totalMoney);
-                clearCart();
-                setShowConfirmModal(false); // Bây giờ mới được đóng modal
-            } 
-            // Nếu bấm Cancel, modal vẫn giữ nguyên để khách có thể in lại hoặc sửa đơn
-        }, 500);
+        // Chuyển sang bước xác nhận lưu (cập nhật UI sau khi dialog in đóng hoặc mở)
+        setPrintStep('check');
+    };
+
+    // BƯỚC 2: Lưu và Xóa đơn (Thủ công)
+    const handleSaveAndFinish = () => {
+        let totalMoney = 0;
+        cart.forEach(i => totalMoney += (i.price * (Number(i.quantity) || 0)));
+        sendToGoogleSheet(totalMoney);
+        clearCart();
+        setShowConfirmModal(false);
+    };
+
+    const handleOpenModal = () => {
+        if (cart.length === 0) {
+            alert("Chưa chọn món nào!");
+            return;
+        }
+        setPrintStep('preview'); // Luôn bắt đầu ở trạng thái xem trước
+        setShowConfirmModal(true);
     };
 
     // --- STATS ---
@@ -504,7 +513,7 @@ const App = () => {
                                 <button id="btn-clear" className="action-btn" onClick={clearCart}>
                                     🗑️ Xóa
                                 </button>
-                                <button id="btn-print" className="action-btn" onClick={() => cart.length > 0 ? setShowConfirmModal(true) : alert("Chưa chọn món nào!")}>
+                                <button id="btn-print" className="action-btn" onClick={handleOpenModal}>
                                     🖨️ IN & LƯU
                                 </button>
                             </div>
@@ -516,8 +525,12 @@ const App = () => {
                 {showConfirmModal && (
                     <div id="confirm-modal" className="modal-overlay">
                         <div className="modal-box">
-                            <div className="modal-title">XÁC NHẬN ĐƠN HÀNG</div>
-                            <div className="confirm-list">
+                            <div className="modal-title">
+                                {printStep === 'preview' ? 'XÁC NHẬN ĐƠN HÀNG' : 'HOÀN TẤT ĐƠN HÀNG'}
+                            </div>
+                            
+                            {/* PHẦN DANH SÁCH MÓN - Chỉ hiện khi ở bước Preview hoặc để tham khảo */}
+                            <div className="confirm-list" style={{ maxHeight: '40vh', overflowY: 'auto' }}>
                                 {cart.map((item, idx) => (
                                     <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px', borderBottom: '1px dashed #cbd5e1', paddingBottom: '8px'}} key={idx}>
                                         <div style={{ flex: 1 }}>
@@ -529,9 +542,54 @@ const App = () => {
                                 ))}
                             </div>
                             <div style={{textAlign: 'right', fontSize: '20px', fontWeight: '900', color: '#3b82f6', margin: '16px 0'}}>Tổng: {formatK(cartTotal)}</div>
-                            <div style={{display: 'flex', gap: '12px'}}>
-                                <button className="modal-btn btn-cancel" style={{flex: 1, padding: '12px', border: 'none', borderRadius: '12px', background: '#f1f5f9', fontWeight: 'bold', color: '#64748b'}} onClick={() => setShowConfirmModal(false)}>Quay lại</button>
-                                <button className="modal-btn btn-confirm" style={{flex: 1, padding: '12px', border: 'none', borderRadius: '12px', background: '#3b82f6', fontWeight: 'bold', color: 'white'}} onClick={processPrintAndSave}>✅ IN PHIẾU</button>
+                            
+                            {/* KHU VỰC NÚT BẤM - Thay đổi theo trạng thái */}
+                            <div style={{display: 'flex', gap: '12px', flexDirection: 'column'}}>
+                                {printStep === 'preview' ? (
+                                    <div style={{display: 'flex', gap: '12px'}}>
+                                        <button 
+                                            className="modal-btn btn-cancel" 
+                                            style={{flex: 1, padding: '16px', border: 'none', borderRadius: '12px', background: '#f1f5f9', fontWeight: 'bold', color: '#64748b'}} 
+                                            onClick={() => setShowConfirmModal(false)}
+                                        >
+                                            Quay lại sửa
+                                        </button>
+                                        <button 
+                                            className="modal-btn btn-confirm" 
+                                            style={{flex: 2, padding: '16px', border: 'none', borderRadius: '12px', background: '#3b82f6', fontWeight: 'bold', color: 'white', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}} 
+                                            onClick={handlePrintOnly}
+                                        >
+                                            <span>🖨️</span> IN PHIẾU NGAY
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div style={{display: 'flex', flexDirection: 'column', gap: '10px', background: '#ecfdf5', padding: '15px', borderRadius: '12px', border: '1px solid #10b981'}}>
+                                        <div style={{textAlign: 'center', color: '#047857', fontWeight: 'bold', marginBottom: '5px'}}>
+                                            Bạn đã in phiếu xong chưa?
+                                        </div>
+                                        <button 
+                                            className="modal-btn" 
+                                            style={{width: '100%', padding: '16px', border: 'none', borderRadius: '12px', background: '#10b981', fontWeight: 'bold', color: 'white', fontSize: '16px'}} 
+                                            onClick={handleSaveAndFinish}
+                                        >
+                                            💾 ĐÃ IN XONG - LƯU & XÓA ĐƠN
+                                        </button>
+                                        <div style={{display: 'flex', gap: '10px', marginTop: '5px'}}>
+                                            <button 
+                                                style={{flex: 1, padding: '12px', border: '1px solid #3b82f6', borderRadius: '10px', background: 'white', color: '#3b82f6', fontWeight: 'bold'}} 
+                                                onClick={handlePrintOnly}
+                                            >
+                                                🖨️ In lại
+                                            </button>
+                                            <button 
+                                                style={{flex: 1, padding: '12px', border: 'none', borderRadius: '10px', background: '#fee2e2', color: '#ef4444', fontWeight: 'bold'}} 
+                                                onClick={() => setShowConfirmModal(false)}
+                                            >
+                                                ❌ Đóng (Không lưu)
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

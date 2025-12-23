@@ -356,9 +356,11 @@
 
             /* STYLE TEM IN */
             .sticker {
-                page-break-after: always;
-                break-after: page;
-                /* QUAN TRỌNG: Ngăn chặn in nhiều tem 1 trang nếu nội dung ngắn */
+                /* Ngắt trang chuẩn xác cho máy in nhiệt */
+                page-break-after: always; /* Cú pháp cũ */
+                break-after: page;        /* Cú pháp mới */
+                
+                /* Ngăn chặn in nhiều tem 1 trang nếu nội dung ngắn */
                 break-inside: avoid; 
                 
                 width: 100%;

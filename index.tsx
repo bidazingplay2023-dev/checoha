@@ -276,11 +276,16 @@ const App = () => {
         // Gán HTML
         printArea.innerHTML = stickersHTML;
 
-        // Gọi in NGAY LẬP TỨC (không timeout, không promise)
+        // Gọi in NGAY LẬP TỨC
         window.print();
 
-        // Chuyển sang bước xác nhận lưu (cập nhật UI sau khi dialog in đóng hoặc mở)
-        setPrintStep('check');
+        // FIX LỖI IOS BLOCK POPUP:
+        // Delay việc chuyển đổi giao diện để đảm bảo nút "In" vẫn tồn tại
+        // và đang trong trạng thái "active" khi trình duyệt xử lý lệnh in.
+        // Trên iOS, JS sẽ tạm dừng khi dialog in hiện ra, và tiếp tục sau khi in xong.
+        setTimeout(() => {
+            setPrintStep('check');
+        }, 800); 
     };
 
     // BƯỚC 2: Lưu và Xóa đơn (Thủ công)

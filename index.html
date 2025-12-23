@@ -325,22 +325,23 @@
         /* --- PRINT AREA --- */
         #print-area { display: none; }
 
-        /* --- PRINT STYLES (CRITICAL FIX FOR IOS) --- */
+        /* --- PRINT STYLES (CRITICAL FIX FOR THERMAL PRINTERS) --- */
         @media print {
+            /* 1. Thiết lập khổ giấy AUTO để máy in tự quyết định theo driver */
             @page { 
                 size: auto; 
-                margin: 0mm; 
+                margin: 0;
             }
+            
             body, html {
                 width: 100%;
+                height: 100%;
                 margin: 0;
                 padding: 0;
                 background: white;
-                overflow: visible !important;
-                height: auto !important;
             }
             
-            /* ẨN GIAO DIỆN APP: ẨN ROOT ĐỂ SẠCH SẼ HƠN */
+            /* ẨN GIAO DIỆN APP */
             #root, .modal-overlay, #toast { 
                 display: none !important; 
             }
@@ -352,58 +353,63 @@
                 top: 0;
                 left: 0;
                 width: 100%;
+                height: 100%;
             }
 
             /* STYLE TEM IN */
             .sticker {
-                /* Ngắt trang chuẩn xác cho máy in nhiệt */
-                page-break-after: always; /* Cú pháp cũ */
-                break-after: page;        /* Cú pháp mới */
+                /* NGẮT TRANG TUYỆT ĐỐI SAU MỖI TEM */
+                page-break-after: always;
+                break-after: page;
                 
-                /* Ngăn chặn in nhiều tem 1 trang nếu nội dung ngắn */
-                break-inside: avoid; 
-                
+                /* Đảm bảo tem chiếm toàn bộ 1 "trang" khổ in (label) */
                 width: 100%;
-                box-sizing: border-box;
+                height: 100vh; /* 100vh = chiều cao của 1 nhãn in (do driver set) */
+                
+                /* Căn giữa nội dung vào giữa tem */
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
                 text-align: center;
-                padding: 2mm 1mm;
                 
-                /* Mẹo: Đặt chiều cao tối thiểu để ép trình duyệt cắt trang nếu cần */
-                min-height: 80px; 
+                /* Padding an toàn để không bị mất chữ ở mép */
+                padding: 2mm;
+                box-sizing: border-box;
+                overflow: hidden;
             }
+
             .sticker-content {
-                width: 95%;
+                width: 100%;
             }
+            
             .sticker-name {
-                font-size: 22px;
+                font-size: 24px; /* Tăng size chữ cho dễ nhìn */
                 font-weight: 900;
                 line-height: 1.1;
                 text-transform: uppercase;
                 color: #000;
                 margin-bottom: 4px;
             }
+            
             .sticker-note {
                 display: inline-block;
                 background: #000;
                 color: #fff;
                 font-weight: bold;
-                font-size: 14px;
-                padding: 2px 6px;
+                font-size: 16px;
+                padding: 4px 8px;
                 border-radius: 4px;
-                margin: 2px 0 4px 0;
+                margin: 4px 0 6px 0;
                 line-height: 1.2;
-                /* Bắt buộc in background màu đen */
                 -webkit-print-color-adjust: exact; 
                 print-color-adjust: exact;
             }
+            
             .sticker-meta {
-                font-size: 12px;
+                font-size: 14px;
                 font-weight: 600;
-                color: #333;
+                color: #000;
             }
         }
     </style>

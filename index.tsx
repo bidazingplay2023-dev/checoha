@@ -238,30 +238,19 @@ const App = () => {
     };
 
     /**
-     * In phiếu thông qua Iframe ẩn.
-     * Giải quyết vấn đề:
-     * 1. iOS chặn popup in (giữ context user action).
-     * 2. Layout bị vỡ khi chọn khổ giấy khác A4 (CSS isolated).
-     * 3. Header/Footer ngày giờ của trình duyệt (dùng @page margin 0).
+     * In phiếu trực tiếp trên window chính (thông qua @media print).
+     * Giải quyết triệt để vấn đề:
+     * 1. iOS chặn popup: Sử dụng window.print() trực tiếp trong luồng sự kiện click.
+     * 2. Layout & Ngày giờ: Sử dụng @page trong CSS global thay vì iframe.
      */
     const printReceipt = (items: CartItem[], onAfterPrint: () => void) => {
-        // 1. Tạo iframe ẩn
-        const iframe = document.createElement('iframe');
-        iframe.style.position = 'fixed';
-        iframe.style.width = '0px';
-        iframe.style.height = '0px';
-        iframe.style.border = 'none';
-        iframe.style.zIndex = '-1';
-        document.body.appendChild(iframe);
-
-        const doc = iframe.contentWindow?.document;
-        if (!doc) {
-            document.body.removeChild(iframe);
-            onAfterPrint();
+        const printArea = document.getElementById('print-area');
+        if (!printArea) {
+            alert("Lỗi: Không tìm thấy khu vực in!");
             return;
         }
 
-        // 2. Tạo nội dung HTML cho tem
+        // 1. Tạo nội dung HTML cho tem
         let stickersHTML = '';
         items.forEach(item => {
             const qty = Number(item.quantity) || 0;
@@ -283,109 +272,28 @@ const App = () => {
             }
         });
 
-        // 3. Viết vào iframe
-        doc.open();
-        doc.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>In Tem</title>
-                <style>
-                    /* QUAN TRỌNG: Reset khổ giấy để máy in tự nhận diện khổ tem */
-                    @page { 
-                        size: auto; 
-                        margin: 0mm; 
-                    }
-                    body, html { 
-                        margin: 0; 
-                        padding: 0; 
-                        background: #fff; 
-                        font-family: 'Roboto', sans-serif;
-                    }
-                    .sticker {
-                        /* Đảm bảo mỗi tem là 1 trang in riêng biệt */
-                        page-break-after: always;
-                        break-after: page;
-                        
-                        /* Căn giữa nội dung */
-                        width: 100%;
-                        box-sizing: border-box;
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
-                        align-items: center;
-                        text-align: center;
-                        padding: 2mm 1mm;
-                        
-                        /* Đường viền ảo để dễ debug trên màn hình, khi in nhiệt thường không cần */
-                        border-bottom: 1px dashed #eee; 
-                    }
-                    /* Container nội dung để tránh bị cắt sát lề */
-                    .sticker-content {
-                        width: 95%;
-                    }
-                    .sticker-name {
-                        font-size: 22px;
-                        font-weight: 900;
-                        line-height: 1.1;
-                        text-transform: uppercase;
-                        color: #000;
-                        margin-bottom: 4px;
-                    }
-                    .sticker-note {
-                        display: inline-block;
-                        background: #000;
-                        color: #fff;
-                        font-weight: bold;
-                        font-size: 14px;
-                        padding: 2px 6px;
-                        border-radius: 4px;
-                        margin: 2px 0 4px 0;
-                        line-height: 1.2;
-                    }
-                    .sticker-meta {
-                        font-size: 12px;
-                        font-weight: 600;
-                        color: #333;
-                    }
-                </style>
-            </head>
-            <body>${stickersHTML}</body>
-            </html>
-        `);
-        doc.close();
+        // 2. Gán nội dung vào div in ẩn (Synchronous - Đồng bộ)
+        printArea.innerHTML = stickersHTML;
 
-        // 4. Lệnh in
-        // Timeout ngắn (100ms) đủ để render DOM nhưng không quá lâu để bị iOS chặn (lost user gesture).
-        setTimeout(() => {
-            try {
-                iframe.contentWindow?.focus();
-                iframe.contentWindow?.print();
-            } catch (e) {
-                console.error("Print error:", e);
-                alert("Lỗi gọi máy in. Vui lòng thử lại.");
-            }
+        // 3. Gọi lệnh in ngay lập tức (Không dùng setTimeout để giữ User Gesture)
+        window.print();
 
-            // Cleanup sau khi hộp thoại in đóng lại (hoặc sau 1 khoảng thời gian an toàn)
-            // Lưu ý: window.print() chặn luồng trên Desktop nhưng không chặn trên mobile.
-            // Ta sẽ đợi user confirm ở bước tiếp theo trong modal.
-            setTimeout(() => {
-                document.body.removeChild(iframe);
-                onAfterPrint();
-            }, 500);
-
-        }, 100); 
+        // 4. Xử lý sau khi in
+        onAfterPrint();
     };
 
     const processPrintAndSave = () => {
         let totalMoney = 0;
         cart.forEach(i => totalMoney += (i.price * (Number(i.quantity) || 0)));
+        
+        // Đóng modal xác nhận trước khi in
         setShowConfirmModal(false);
 
         // Gọi hàm in mới
         printReceipt(cart, () => {
-            // Callback này chạy sau khi lệnh in được gửi đi.
-            // Do mobile không biết chính xác khi nào in xong, ta dùng confirm thủ công.
+            // Callback này chạy ngay sau khi lệnh window.print() được gọi.
+            // Trên mobile, luồng code chạy tiếp ngay cả khi dialog in đang mở.
+            // Ta dùng setTimeout nhỏ để đảm bảo dialog confirm hiện ra sau dialog in (hoặc song song).
             setTimeout(() => {
                 const isPrinted = window.confirm("🖨️ XÁC NHẬN:\n\nPhiếu đã in ra chưa?\n\n- Bấm [OK] để LƯU DOANH THU & XÓA ĐƠN.\n- Bấm [Cancel] để giữ lại đơn nếu in lỗi.");
                 

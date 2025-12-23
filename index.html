@@ -321,6 +321,85 @@
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
         }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+
+        /* --- PRINT AREA --- */
+        #print-area { display: none; }
+
+        /* --- PRINT STYLES (CRITICAL FIX FOR IOS) --- */
+        @media print {
+            @page { 
+                size: auto; 
+                margin: 0mm; 
+            }
+            body, html {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                background: white;
+                overflow: visible !important;
+                height: auto !important;
+            }
+            
+            /* ẨN GIAO DIỆN APP */
+            #ui-container, .modal-overlay, #toast { 
+                display: none !important; 
+            }
+            
+            /* HIỆN KHU VỰC IN */
+            #print-area { 
+                display: block !important; 
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+            }
+
+            /* STYLE TEM IN */
+            .sticker {
+                page-break-after: always;
+                break-after: page;
+                width: 100%;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                padding: 2mm 1mm;
+                /* Viền đứt để dễ căn chỉnh (có thể bỏ nếu máy in chuẩn) */
+                /* border-bottom: 1px dashed #eee; */
+            }
+            .sticker-content {
+                width: 95%;
+            }
+            .sticker-name {
+                font-size: 22px;
+                font-weight: 900;
+                line-height: 1.1;
+                text-transform: uppercase;
+                color: #000;
+                margin-bottom: 4px;
+            }
+            .sticker-note {
+                display: inline-block;
+                background: #000;
+                color: #fff;
+                font-weight: bold;
+                font-size: 14px;
+                padding: 2px 6px;
+                border-radius: 4px;
+                margin: 2px 0 4px 0;
+                line-height: 1.2;
+                /* Bắt buộc in background màu đen */
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact;
+            }
+            .sticker-meta {
+                font-size: 12px;
+                font-weight: 600;
+                color: #333;
+            }
+        }
     </style>
 <script type="importmap">
 {
@@ -338,6 +417,8 @@
 </head>
 <body>
     <div id="root"></div>
+    <!-- KHU VỰC IN ẨN -->
+    <div id="print-area"></div>
     <script type="module" src="./index.tsx"></script>
 <script type="module" src="/index.tsx"></script>
 </body>
